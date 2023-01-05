@@ -12,14 +12,16 @@ import javax.crypto.spec.GCMParameterSpec
 
 object AndroidKeyStoreUtil {
     private const val KEY_LENGTH_BIT = 128
-    private val keyGenerator =
+    private val KEY_GENERATOR =
         KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore")
 
-    private val keyStore = KeyStore.getInstance("AndroidKeyStore")
+    private val KEYSTORE = KeyStore.getInstance("AndroidKeyStore")
 
     private val IV = ByteArray(12)
 
     private val CIPHER_WITH_ALGORITHM = Cipher.getInstance("AES/GCM/NoPadding")
+
+    // 암호화 후 키스토어에 저장
     fun generateAndSaveKey(plaintext: String): ByteArray {
 
         val keyGenParameterSpec = KeyGenParameterSpec.Builder(
@@ -32,8 +34,8 @@ object AndroidKeyStoreUtil {
             .setRandomizedEncryptionRequired(false)
             .build()
 
-        keyGenerator.init(keyGenParameterSpec)
-        val secretKey: SecretKey = keyGenerator.generateKey()
+        KEY_GENERATOR.init(keyGenParameterSpec)
+        val secretKey: SecretKey = KEY_GENERATOR.generateKey()
 
         SecureRandom().nextBytes(IV)
 
@@ -45,9 +47,9 @@ object AndroidKeyStoreUtil {
         )
         val ciphertext = CIPHER_WITH_ALGORITHM.doFinal(plaintext.toByteArray())
 
-        keyStore.load(null)
+        KEYSTORE.load(null)
 
-        keyStore.setEntry(
+        KEYSTORE.setEntry(
             "key1",
             KeyStore.SecretKeyEntry(secretKey),
             null
@@ -57,12 +59,13 @@ object AndroidKeyStoreUtil {
 
     }
 
+    // 키 불러오고 복호화
     fun loadAndDecryptKey(ciphertext: ByteArray): String {
 
         // Load the key from the Android Keystore
-        keyStore.load(null)
+        KEYSTORE.load(null)
 
-        val secretKey = keyStore.getKey("key1", null) as SecretKey
+        val secretKey = KEYSTORE.getKey("key1", null) as SecretKey
 
         // Decrypt the ciphertext
         CIPHER_WITH_ALGORITHM.init(
