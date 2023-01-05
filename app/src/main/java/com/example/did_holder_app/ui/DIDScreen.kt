@@ -19,7 +19,6 @@ fun DIDScreen() {
         verticalArrangement = Arrangement.Center
     ) {
         GenerateDIDButton(modifier = Modifier.padding(16.dp))
-        Text(text = "DID 생성", style = MaterialTheme.typography.bodyLarge)
     }
 }
 

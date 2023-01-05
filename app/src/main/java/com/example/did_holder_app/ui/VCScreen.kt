@@ -19,7 +19,6 @@ fun VCScreen() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        GenerateDIDButton(modifier = Modifier.padding(16.dp))
         Text(text = "VC 생성", style = MaterialTheme.typography.bodyLarge)
     }
 }
