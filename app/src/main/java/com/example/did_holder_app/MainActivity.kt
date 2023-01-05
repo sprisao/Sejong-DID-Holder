@@ -36,7 +36,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             DID_Holder_AppTheme {
-
+                DidApp()
             }
         }
     }
