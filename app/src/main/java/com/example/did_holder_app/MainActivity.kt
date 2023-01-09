@@ -16,11 +16,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.did_holder_app.data.DIDRepositoryImpl
 import com.example.did_holder_app.ui.theme.DID_Holder_AppTheme
 import com.example.did_holder_app.ui.viewmodel.DIDViewModel
+import com.example.did_holder_app.ui.viewmodel.DIDViewModelProviderFactory
 import com.example.did_holder_app.util.AndroidKeyStoreUtil.generateAndSaveKey
 import com.example.did_holder_app.util.AndroidKeyStoreUtil.loadAndDecryptKey
 import com.example.did_holder_app.util.Constants.DATASTORE_NAME
@@ -39,25 +41,10 @@ class MainActivity : ComponentActivity() {
         if (BuildConfig.DEBUG) {
             Timber.plant(Timber.DebugTree())
         }
-
         val DIDRepository = DIDRepositoryImpl(dataStore)
-        didViewModel = DIDViewModel(DIDRepository)
+        val factory = DIDViewModelProviderFactory(DIDRepository, this)
 
-        lifecycleScope.launch{
-            didViewModel.getDID()
-            Timber.d("DID: ${didViewModel.getDID()}")
-        }
-
-
-        try {
-            if (didViewModel.getDID() == null) {
-            } else {
-                Timber.d("DID is not null")
-            }
-        } catch (e: Exception) {
-            Timber.e(e)
-        }
-
+        didViewModel = ViewModelProvider(this, factory)[DIDViewModel::class.java]
 
         setContent {
             DID_Holder_AppTheme {
