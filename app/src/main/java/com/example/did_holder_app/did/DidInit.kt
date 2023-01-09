@@ -1,11 +1,12 @@
 package com.example.did_holder_app.did
 
+import android.content.Context
 import android.util.Base64
 import com.example.did_holder_app.ui.viewmodel.DIDViewModel
 import com.example.did_holder_app.util.AndroidKeyStoreUtil
 import java.security.*
 
-class DidInit(private val didViewModel: DIDViewModel){
+class DidInit(context: Context, private val didViewModel: DIDViewModel){
 
 
     /* 1. 비대칭 키 쌍 생성 */
@@ -19,7 +20,6 @@ class DidInit(private val didViewModel: DIDViewModel){
         AndroidKeyStoreUtil.loadAndDecryptKey(encryptedPrivateKey)
 
     /* 3. 생성한 공개키로 DID 생성 */
-    val did: String = generateDID(publicKey)
 
     /* 4. 생성한 DID와 PublicKey를 Room에 저장*/
 
@@ -30,7 +30,7 @@ class DidInit(private val didViewModel: DIDViewModel){
         return keyPair
     }
 
-    private fun generateDID(pubKey: PublicKey): String {
+     fun generateDID(pubKey: PublicKey): String {
         val generatedDid: String
 
         val message = pubKey.toString()
@@ -38,7 +38,7 @@ class DidInit(private val didViewModel: DIDViewModel){
         val genDid = md.digest(message.toByteArray())
 
         generatedDid = "did:sjbr:${Base64.encodeToString(genDid, Base64.NO_WRAP)}"
-        didViewModel.saveDID(generatedDid)
+//        didViewModel.saveDID(generatedDid)
         /* - publicKey를 Base64로 encoding하여 생성*/
 
         return generatedDid

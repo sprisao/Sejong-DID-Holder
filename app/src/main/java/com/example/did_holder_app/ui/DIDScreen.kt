@@ -4,36 +4,29 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.did_holder_app.did.DidInit
 import com.example.did_holder_app.ui.viewmodel.DIDViewModel
-import timber.log.Timber
+import com.example.did_holder_app.util.DidDataStore
+import kotlinx.coroutines.launch
 
 @Composable
 fun DIDScreen(didViewModel: DIDViewModel) {
-    val didInit = DidInit(didViewModel)
-
-    val publicKey = didInit.publicKey
-    val privateKey = didInit.privateKey
-
-    Timber.d("publicKey: $publicKey")
-    Timber.d("privateKey: $privateKey")
+    val context = LocalContext.current
+    val didInit = DidInit(context, didViewModel)
 
     val scope = rememberCoroutineScope()
+    val dataStore = DidDataStore(context)
 
-    didViewModel.getDID()
+
+    val myDid = dataStore.getDid.collectAsState(initial = "")
+
 
     /*show did from datastore*/
-    val did = didViewModel.getDID()
-    val didText = remember { mutableStateOf(did) }
-
-    Timber.d("didText: $didText")
 
     Column(
         modifier = Modifier
@@ -42,8 +35,17 @@ fun DIDScreen(didViewModel: DIDViewModel) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        GenerateDIDButton(modifier = Modifier.padding(16.dp))
+
+        if (myDid.value == "") {
+            scope.launch {
+                val did = didInit.generateDID(didInit.publicKey)
+                dataStore.saveDid(did)
+            }
+            GenerateDIDButton(modifier = Modifier.padding(16.dp))
+        }
+        Text(text = myDid.value!!)
     }
+
 }
 
 @Composable
