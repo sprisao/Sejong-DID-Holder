@@ -22,6 +22,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.did_holder_app.ui.DIDScreen
 import com.example.did_holder_app.ui.QRScreen
 import com.example.did_holder_app.ui.VCScreen
+import com.example.did_holder_app.ui.viewmodel.DIDViewModel
 import com.example.did_holder_app.util.Constants
 
 
@@ -39,21 +40,20 @@ sealed class BottomNavItem(val screenRoute: String, val title: Int, val icon: In
 }
 
 
-@Preview
 @Composable
-fun DidApp() {
+fun DidApp(didViewModel: DIDViewModel) {
     val navController = rememberNavController()
     Scaffold(bottomBar = { DIDBottomNav(navController = navController) }) {
         Box(Modifier.padding(it))
-        NavigationGraph(navController = navController)
+        NavigationGraph(navController = navController, didViewModel = didViewModel)
     }
 }
 
 @Composable
-fun NavigationGraph(navController: NavHostController) {
+fun NavigationGraph(navController: NavHostController, didViewModel: DIDViewModel) {
     NavHost(navController = navController, startDestination = Constants.DID) {
         composable(Constants.DID) {
-            DIDScreen()
+            DIDScreen(didViewModel = didViewModel)
         }
         composable(Constants.VC) {
             VCScreen()

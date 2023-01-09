@@ -9,14 +9,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import com.example.did_holder_app.ui.viewmodel.DIDViewModel
 import com.example.did_holder_app.util.AndroidKeyStoreUtil.generateAndSaveKey
 import com.example.did_holder_app.util.AndroidKeyStoreUtil.loadAndDecryptKey
 import timber.log.Timber
 import java.security.*
 
 @Composable
-fun DIDScreen() {
-    val didDoc = DidDocument()
+fun DIDScreen(didViewModel: DIDViewModel) {
+    val didDoc = DidDocument(didViewModel)
 
     val publicKey = didDoc.publicKey.toString()
     val privateKey = didDoc.privateKey
@@ -30,6 +32,9 @@ fun DIDScreen() {
     Timber.d("Encrypted Private Key: $encPrivateKey")
     Timber.d("Decrypted Private Key: $decPrivateKey")
     Timber.d("DID: $did")
+
+    /*Check DID*/
+
 
     Column(
         modifier = Modifier
@@ -55,27 +60,45 @@ fun GenerateDIDButton(modifier: Modifier) {
 }
 
 
-class DidDocument {
-    /* 1. Generate Asymmetric Key */
-    val keyPair: KeyPair = KeyPairGenerator.getInstance("RSA").apply {
-        initialize(2048)
-    }.generateKeyPair()
+class DidDocument(private val didViewModel: DIDViewModel) {
 
-    /* Generated Asymmetric Keypair*/
-    val publicKey: PublicKey = keyPair.public
-    val privateKey: PrivateKey = keyPair.private
 
-    /* Todo: 여기서 Keypair를 한번 더 Encode 하는 것이 필요한가?*/
+    /* 1. 비대칭 키 쌍 생성 */
+    val publicKey: PublicKey = generateKeyPair().public
+    val privateKey: PrivateKey = generateKeyPair().private
 
-    /* PrivateKey 암호화 및 Keystore에 저장*/
+    /* 2. PrivateKey 암호화 및 Keystore에 저장*/
     val encryptedPrivateKey: ByteArray = generateAndSaveKey(privateKey.toString())
-
-    /* 암호화하여 저장된 PrivateKey를 Keystore에서 가져옴*/
     val decryptedPrivateKey: String = loadAndDecryptKey(encryptedPrivateKey)
+
+    /* 3. 생성한 공개키로 DID 생성 */
+    val did: String = generateDID(publicKey)
+
+    /* 4. 생성한 DID와 PublicKey를 Room에 저장*/
+
+    private fun generateKeyPair(): KeyPair {
+        val keyPair: KeyPair = KeyPairGenerator.getInstance("RSA").apply {
+            initialize(2048)
+        }.generateKeyPair()
+        return keyPair
+    }
+
+    private fun generateDID(pubKey: PublicKey): String {
+        val generatedDid: String
+
+        val message = pubKey.toString()
+        val md = MessageDigest.getInstance("SHA-256")
+        val genDid = md.digest(message.toByteArray())
+
+        generatedDid = "did:sjbr:${Base64.encodeToString(genDid, Base64.NO_WRAP)}"
+        didViewModel.saveDID(generatedDid)
+        /* - publicKey를 Base64로 encoding하여 생성*/
+
+        return generatedDid
+    }
 
 
     // ------ DID Auth 부분 ------
-
     /* 개인키를 활용하여 Message에 사인*/
     fun signMessage(privateKey: PrivateKey, message: String): String {
 
@@ -96,23 +119,4 @@ class DidDocument {
         sig.update(message.toByteArray())
         return sig.verify(signature)
     }
-
-    // ------ DID Auth 부분 ------
-
-
-    /* 2. 생성한 공개키를 활용하여 DID 생성 */
-    /* - publicKey를 Base64로 encoding하여 생성*/
-    val did: String = generateDID(publicKey)
-
-
-    /* pubKey를 Encoding 한다면 ByteArray로 받아야 하지만 그냥 전달하므로 PublicKey 객체를 인자로 받는다.*/
-    private fun generateDID(pubKey: PublicKey): String {
-
-        val message = pubKey.toString()
-        val md = MessageDigest.getInstance("SHA-256")
-        val genDid = md.digest(message.toByteArray())
-
-        return "did:sjbr:${Base64.encodeToString(genDid, Base64.NO_WRAP)}"
-    }
-
 }
