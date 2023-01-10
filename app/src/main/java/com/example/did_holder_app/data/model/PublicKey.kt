@@ -10,7 +10,7 @@ data class PublicKey(
     val controller: String,
     @Json(name = "id")
     val id: String,
-    @Json(name = "publicKeyBase58")
+    @Json(name = "publicKeyBase64")
     val publicKeyBase58: String,
     @Json(name = "type")
     val type: String
