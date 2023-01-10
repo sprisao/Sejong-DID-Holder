@@ -2,44 +2,49 @@ package com.example.did_holder_app.did
 
 import android.content.Context
 import android.util.Base64
-import com.example.did_holder_app.ui.viewmodel.DIDViewModel
 import com.example.did_holder_app.util.AndroidKeyStoreUtil
+import com.example.did_holder_app.util.DidDataStore
 import java.security.*
+import kotlin.coroutines.coroutineContext
 
 class DidInit(context: Context) {
 
+    val didDataStore = DidDataStore(context)
 
-    /* 1. 비대칭 키 쌍 생성 */
-    val publicKey: PublicKey = generateKeyPair().public
-    val privateKey: PrivateKey = generateKeyPair().private
+    suspend fun generateDID(): String {
 
-    /* 2. PrivateKey 암호화 및 Keystore에 저장*/
-    val encryptedPrivateKey: ByteArray =
-        AndroidKeyStoreUtil.generateAndSaveKey(privateKey.toString())
-    val decryptedPrivateKey: String =
-        AndroidKeyStoreUtil.loadAndDecryptKey(encryptedPrivateKey)
 
-    /* 3. 생성한 공개키로 DID 생성 */
-
-    /* 4. 생성한 DID와 PublicKey를 Room에 저장*/
-
-    private fun generateKeyPair(): KeyPair {
         val keyPair: KeyPair = KeyPairGenerator.getInstance("RSA").apply {
             initialize(2048)
         }.generateKeyPair()
-        return keyPair
-    }
 
-    fun generateDID(pubKey: PublicKey): String {
+        val publicKey: PublicKey = keyPair.public
+        val privateKey: PrivateKey =  keyPair.private
+
+
+        /* save original public Key in datastore*/
+        didDataStore.savePublicKey(publicKey.toString())
+
+        /* encrypt and save private Key in Keystore*/
+        val encryptedPrivateKey: ByteArray =
+            AndroidKeyStoreUtil.generateAndSaveKey(privateKey.toString())
+
+        /* save encrypted Private Key in datastore*/
+
+
+        val decryptedPrivateKey: String =
+            AndroidKeyStoreUtil.loadAndDecryptKey(encryptedPrivateKey)
+
         val generatedDid: String
 
-        val message = pubKey.toString()
+        val message = publicKey.toString()
         val md = MessageDigest.getInstance("SHA-256")
-        val genDid = md.digest(message.toByteArray())
+        val encryptedPubKey = md.digest(message.toByteArray())
 
-        generatedDid = "did:sjbr:${Base64.encodeToString(genDid, Base64.NO_WRAP)}"
-//        didViewModel.saveDID(generatedDid)
-        /* - publicKey를 Base64로 encoding하여 생성*/
+        // DID Url 부분
+        val encodedPubKey = Base64.encodeToString(encryptedPubKey, Base64.NO_WRAP)
+
+        generatedDid = "did:sjbr:${encodedPubKey}"
 
         return generatedDid
     }
