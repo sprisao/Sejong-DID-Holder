@@ -2,13 +2,23 @@ package com.example.did_holder_app.did
 
 import android.content.Context
 import android.util.Base64
+import com.example.did_holder_app.data.model.DidDocument
 import com.example.did_holder_app.util.AndroidKeyStoreUtil
+import com.example.did_holder_app.util.Constants.DID_METHODE
 import com.example.did_holder_app.util.DidDataStore
+import com.squareup.moshi.JsonAdapter
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import timber.log.Timber
 import java.security.*
 
 class DidInit(context: Context) {
 
     private val didDataStore = DidDataStore(context)
+
+    val moshi = com.squareup.moshi.Moshi.Builder()
+        .add(KotlinJsonAdapterFactory())
+        .build()
+    val jsonAdapter: JsonAdapter<DidDocument> = moshi.adapter(DidDocument::class.java)
 
     suspend fun generateDID(): String {
 
@@ -37,8 +47,47 @@ class DidInit(context: Context) {
         // DID Url 부분
         val encodedPubKey = Base64.encodeToString(encryptedPubKey, Base64.NO_WRAP)
 
+
+        val didContext = "https://www.w3.org/ns/did/v1"
+        val didId = "did:$DID_METHODE:$encodedPubKey"
+        val didPublicKey = listOf(
+            com.example.did_holder_app.data.model.PublicKey(
+                controller = didId,
+                id = "$didId#keys-1",
+                publicKeyBase58 = publicKey.toString(),
+                type = "RSAVerificationKey2023"
+            )
+        )
+        val didAuthentication = listOf(
+            com.example.did_holder_app.data.model.Authentication(
+                type = "RSASignatureAuthentication2023",
+                publicKey = "$didId#keys-1"
+            )
+        )
+        val didService = listOf(
+            com.example.did_holder_app.data.model.Service(
+                id = "$didId;indx",
+                type = "IndxService",
+                serviceEndpoint = "https://example.com/indx"
+            )
+        )
+        val didDocument = DidDocument(
+            context = didContext,
+            id = didId,
+            publicKey = didPublicKey,
+            authentication = didAuthentication,
+            service = didService
+        )
+
+        val didDocumentJson = jsonAdapter.toJson(didDocument)
+
+        Timber.d("didDocumentJson: $didDocumentJson")
+
         return "did:sjbr:${encodedPubKey}"
     }
+
+    /*DidDocument data class로 */
+
 
     // ------ DID Auth 부분 ------
     /* 개인키를 활용하여 Message에 사인*/
