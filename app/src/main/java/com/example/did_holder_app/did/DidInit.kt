@@ -5,22 +5,20 @@ import android.util.Base64
 import com.example.did_holder_app.util.AndroidKeyStoreUtil
 import com.example.did_holder_app.util.DidDataStore
 import java.security.*
-import kotlin.coroutines.coroutineContext
 
 class DidInit(context: Context) {
 
-    val didDataStore = DidDataStore(context)
+    private val didDataStore = DidDataStore(context)
 
     suspend fun generateDID(): String {
 
-
+        /* Generate Asymmetric Keypair*/
         val keyPair: KeyPair = KeyPairGenerator.getInstance("RSA").apply {
             initialize(2048)
         }.generateKeyPair()
 
         val publicKey: PublicKey = keyPair.public
-        val privateKey: PrivateKey =  keyPair.private
-
+        val privateKey: PrivateKey = keyPair.private
 
         /* save original public Key in datastore*/
         didDataStore.savePublicKey(publicKey.toString())
@@ -29,13 +27,8 @@ class DidInit(context: Context) {
         val encryptedPrivateKey: ByteArray =
             AndroidKeyStoreUtil.generateAndSaveKey(privateKey.toString())
 
-        /* save encrypted Private Key in datastore*/
-
-
-        val decryptedPrivateKey: String =
-            AndroidKeyStoreUtil.loadAndDecryptKey(encryptedPrivateKey)
-
-        val generatedDid: String
+//        val decryptedPrivateKey: String =
+//            AndroidKeyStoreUtil.loadAndDecryptKey(encryptedPrivateKey)
 
         val message = publicKey.toString()
         val md = MessageDigest.getInstance("SHA-256")
@@ -44,11 +37,8 @@ class DidInit(context: Context) {
         // DID Url 부분
         val encodedPubKey = Base64.encodeToString(encryptedPubKey, Base64.NO_WRAP)
 
-        generatedDid = "did:sjbr:${encodedPubKey}"
-
-        return generatedDid
+        return "did:sjbr:${encodedPubKey}"
     }
-
 
     // ------ DID Auth 부분 ------
     /* 개인키를 활용하여 Message에 사인*/
