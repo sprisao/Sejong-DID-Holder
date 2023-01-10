@@ -6,19 +6,25 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import timber.log.Timber
 
-class DidDataStore(private val context: Context){
+class DidDataStore(private val context: Context) {
     private object PreferencesKeys {
         val DID = stringPreferencesKey("did")
         val PUBLIC_KEY = stringPreferencesKey("public_key")
     }
+
     companion object {
         const val DATASTORE_NAME = "did_datastore"
         private val Context.dataStore by preferencesDataStore(Constants.DATASTORE_NAME)
     }
 
-    val getDid: Flow<String?> = context.dataStore.data.map{ preferences ->
+    val getDid: Flow<String?> = context.dataStore.data.map { preferences ->
         preferences[PreferencesKeys.DID] ?: ""
+    }
+
+    val getPublicKey: Flow<String?> = context.dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.PUBLIC_KEY] ?: ""
     }
 
     suspend fun saveDid(did: String) {
@@ -26,4 +32,21 @@ class DidDataStore(private val context: Context){
             preferences[PreferencesKeys.DID] = did
         }
     }
+
+    suspend fun deleteDid() {
+        context.dataStore.edit { preferences ->
+            preferences.remove(PreferencesKeys.DID)
+        }
+        context.dataStore.edit { preferences ->
+            preferences.remove(PreferencesKeys.PUBLIC_KEY)
+        }
+        Timber.d("did deleted")
+    }
+
+    suspend fun savePublicKey(publicKey: String) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.PUBLIC_KEY] = publicKey
+        }
+    }
+
 }
