@@ -13,6 +13,7 @@ import com.example.did_holder_app.did.DidInit
 import com.example.did_holder_app.ui.viewmodel.DIDViewModel
 import com.example.did_holder_app.util.DidDataStore
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @Composable
 fun DIDScreen() {
@@ -24,6 +25,7 @@ fun DIDScreen() {
 
 
     val myDid = dataStore.getDid.collectAsState(initial = "")
+    val myPublicKey = dataStore.getPublicKey.collectAsState(initial = "")
 
 
     /*show did from datastore*/
@@ -43,7 +45,32 @@ fun DIDScreen() {
 //            }
 //            GenerateDIDButton(modifier = Modifier.padding(16.dp))
 //        }
-        Text(text = myDid.value!!)
+        Text(text = "Public: ${myPublicKey.value}", style = MaterialTheme.typography.bodySmall, maxLines = 2)
+        Text(text = "DID: ${myDid.value}", style = MaterialTheme.typography.bodySmall, maxLines = 2)
+
+        Button(
+            onClick = {
+                scope.launch {
+                    val newDid = didInit.generateDID()
+                    Timber.d("generated did: $newDid")
+                    dataStore.saveDid(newDid)
+                }
+            },
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text(text = "Generate DID")
+        }
+
+        Button(
+            onClick = {
+                scope.launch {
+                    dataStore.deleteDid()
+                }
+            },
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text(text = "Delete DID")
+        }
     }
 
 }
