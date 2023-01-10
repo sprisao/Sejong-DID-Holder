@@ -16,7 +16,9 @@ data class DidDocument(
     val authentication: List<Authentication>,
     @Json(name = "service")
     val service: List<Service>
-)
+) {
+    constructor() : this( "", "", listOf(), listOf(), listOf())
+}
 
 //{
 //    "@context": "https://www.w3.org/ns/did/v1",
