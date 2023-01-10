@@ -6,7 +6,7 @@ import com.example.did_holder_app.ui.viewmodel.DIDViewModel
 import com.example.did_holder_app.util.AndroidKeyStoreUtil
 import java.security.*
 
-class DidInit(context: Context, private val didViewModel: DIDViewModel){
+class DidInit(context: Context) {
 
 
     /* 1. 비대칭 키 쌍 생성 */
@@ -30,7 +30,7 @@ class DidInit(context: Context, private val didViewModel: DIDViewModel){
         return keyPair
     }
 
-     fun generateDID(pubKey: PublicKey): String {
+    fun generateDID(pubKey: PublicKey): String {
         val generatedDid: String
 
         val message = pubKey.toString()

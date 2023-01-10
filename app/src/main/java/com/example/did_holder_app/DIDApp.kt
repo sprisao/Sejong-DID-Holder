@@ -41,19 +41,19 @@ sealed class BottomNavItem(val screenRoute: String, val title: Int, val icon: In
 
 
 @Composable
-fun DidApp(didViewModel: DIDViewModel) {
+fun DidApp() {
     val navController = rememberNavController()
     Scaffold(bottomBar = { DIDBottomNav(navController = navController) }) {
         Box(Modifier.padding(it))
-        NavigationGraph(navController = navController, didViewModel = didViewModel)
+        NavigationGraph(navController = navController)
     }
 }
 
 @Composable
-fun NavigationGraph(navController: NavHostController, didViewModel: DIDViewModel) {
+fun NavigationGraph(navController: NavHostController, ) {
     NavHost(navController = navController, startDestination = Constants.DID) {
         composable(Constants.DID) {
-            DIDScreen(didViewModel = didViewModel)
+            DIDScreen()
         }
         composable(Constants.VC) {
             VCScreen()

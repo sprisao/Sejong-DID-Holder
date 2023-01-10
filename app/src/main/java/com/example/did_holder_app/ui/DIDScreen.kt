@@ -15,9 +15,9 @@ import com.example.did_holder_app.util.DidDataStore
 import kotlinx.coroutines.launch
 
 @Composable
-fun DIDScreen(didViewModel: DIDViewModel) {
+fun DIDScreen() {
     val context = LocalContext.current
-    val didInit = DidInit(context, didViewModel)
+    val didInit = DidInit(context)
 
     val scope = rememberCoroutineScope()
     val dataStore = DidDataStore(context)
@@ -36,13 +36,13 @@ fun DIDScreen(didViewModel: DIDViewModel) {
         verticalArrangement = Arrangement.Center
     ) {
 
-        if (myDid.value == "") {
-            scope.launch {
-                val did = didInit.generateDID(didInit.publicKey)
-                dataStore.saveDid(did)
-            }
-            GenerateDIDButton(modifier = Modifier.padding(16.dp))
-        }
+//        if (myDid.value == "") {
+//            scope.launch {
+//                val did = didInit.generateDID(didInit.publicKey)
+//                dataStore.saveDid(did)
+//            }
+//            GenerateDIDButton(modifier = Modifier.padding(16.dp))
+//        }
         Text(text = myDid.value!!)
     }
 
