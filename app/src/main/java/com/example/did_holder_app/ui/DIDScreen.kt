@@ -9,25 +9,30 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.example.did_holder_app.data.model.DidDocument
 import com.example.did_holder_app.did.DidInit
-import com.example.did_holder_app.ui.viewmodel.DIDViewModel
 import com.example.did_holder_app.util.DidDataStore
+import com.squareup.moshi.JsonAdapter
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @Composable
 fun DIDScreen() {
     val context = LocalContext.current
-    val didInit = DidInit(context)
+    val moshi = com.squareup.moshi.Moshi.Builder()
+        .add(KotlinJsonAdapterFactory())
+        .build()
+    val jsonAdapter: JsonAdapter<DidDocument> = moshi.adapter(DidDocument::class.java)
 
+    val didInit = DidInit()
     val scope = rememberCoroutineScope()
     val dataStore = DidDataStore(context)
 
+    val myDidDocument = dataStore.getDidDocument.collectAsState(initial = DidDocument())
+    val myDidDocumentString = jsonAdapter.toJson(myDidDocument.value)
 
-    val myDid = dataStore.getDid.collectAsState(initial = "")
-    val myPublicKey = dataStore.getPublicKey.collectAsState(initial = "")
-
-
+    Timber.d(myDidDocumentString)
     /*show did from datastore*/
 
     Column(
@@ -38,38 +43,33 @@ fun DIDScreen() {
         verticalArrangement = Arrangement.Center
     ) {
 
-//        if (myDid.value == "") {
-//            scope.launch {
-//                val did = didInit.generateDID(didInit.publicKey)
-//                dataStore.saveDid(did)
-//            }
-//            GenerateDIDButton(modifier = Modifier.padding(16.dp))
-//        }
-        Text(text = "Public: ${myPublicKey.value}", style = MaterialTheme.typography.bodySmall, maxLines = 2)
-        Text(text = "DID: ${myDid.value}", style = MaterialTheme.typography.bodySmall, maxLines = 2)
+        Text(
+            myDidDocumentString,
+            style = MaterialTheme.typography.bodySmall,
+        )
 
         Button(
             onClick = {
                 scope.launch {
-                    val newDid = didInit.generateDID()
-                    Timber.d("generated did: $newDid")
-                    dataStore.saveDid(newDid)
+                    val newDidDocument = didInit.generateDidDocument()
+                    val didDocumentJson = jsonAdapter.toJson(newDidDocument)
+                    dataStore.saveDidDocument(didDocumentJson)
                 }
             },
             modifier = Modifier.padding(16.dp)
         ) {
-            Text(text = "Generate DID")
+            Text(text = "DID 생성")
         }
 
         Button(
             onClick = {
                 scope.launch {
-                    dataStore.deleteDid()
+                    dataStore.deleteDidDocument()
                 }
             },
             modifier = Modifier.padding(16.dp)
         ) {
-            Text(text = "Delete DID")
+            Text(text = "DID 삭제")
         }
     }
 
