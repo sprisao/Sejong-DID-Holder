@@ -1,8 +1,6 @@
 package com.example.did_holder_app.ui
 
-import android.util.Log
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
@@ -20,9 +18,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import androidx.core.content.PermissionChecker
+import androidx.navigation.NavController
 import com.example.did_holder_app.util.BarCodeAnalyser
+import com.example.did_holder_app.util.Constants.QR_RESULT
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.common.util.concurrent.ListenableFuture
@@ -32,20 +32,21 @@ import java.util.concurrent.Executors
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun QRScreen() {
+fun QRScreen(navController: NavController) {
     val cameraPermissionState =
         rememberPermissionState(android.Manifest.permission.CAMERA)
 
     if (!cameraPermissionState.status.isGranted) {
-        CheckPermission()
+        CheckPermission(cameraPermissionState)
     } else {
-        ScanQRCode()
+        ScanQRCode(navController)
     }
 
 }
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun CheckPermission() {
+fun CheckPermission(cameraPermissionState: PermissionState) {
     Column(
         /*align items center of screen*/
         modifier = Modifier.fillMaxSize(),
@@ -53,14 +54,14 @@ fun CheckPermission() {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text("QR코드 스캔을 위해 카메라 권한이 필요합니다.")
-        Button(onClick = { }) {
+        Button(onClick = {cameraPermissionState.launchPermissionRequest()}) {
             Text("권한 설정")
         }
     }
 }
 
 @Composable
-fun ScanQRCode() {
+fun ScanQRCode(navController: NavController) {
 
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -98,9 +99,8 @@ fun ScanQRCode() {
                     barcodes.forEach { barcode ->
                         barcode.rawValue?.let { barcodeValue ->
                             barCodeVal.value = barcodeValue
-                            Timber.tag("QRScreen").d("barcodeValue: " + barcodeValue)
-                            Toast.makeText(context, barcodeValue, Toast.LENGTH_SHORT)
-                                .show()
+                            /*Navigate to qrresultscreen with barcodevalue*/
+                            navController.navigate("$QR_RESULT/$barcodeValue")
                         }
                     }
                 }
@@ -125,4 +125,21 @@ fun ScanQRCode() {
             }, ContextCompat.getMainExecutor(context))
         }
     )
+}
+
+@Composable
+fun QRResultScreen(
+    navController: NavController, qrResult: String
+) {
+    Column(
+        /*align items center of screen*/
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text("QR코드 스캔 결과:\n$qrResult", modifier = Modifier.align(Alignment.CenterHorizontally))
+        Button(onClick = {navController.popBackStack()}) {
+            Text("돌아가기")
+        }
+    }
 }
