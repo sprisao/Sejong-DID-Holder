@@ -95,6 +95,7 @@ fun ScanQRCode(navController: NavController) {
                 }
                 val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
 
+
                 val barcodeAnalyser = BarCodeAnalyser { barcodes ->
                     barcodes.forEach { barcode ->
                         barcode.rawValue?.let { barcodeValue ->
@@ -132,14 +133,16 @@ fun QRResultScreen(
     navController: NavController, qrResult: String
 ) {
     Column(
-        /*align items center of screen*/
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text("QR코드 스캔 결과:\n$qrResult", modifier = Modifier.align(Alignment.CenterHorizontally))
-        Button(onClick = {navController.popBackStack()}) {
-            Text("돌아가기")
+        Button(onClick={/*todo*/}) {
+            Text("신원증명(VP제출)")
         }
     }
+//    Button(onClick = {navController.popBackStack()}) {
+//        Text("돌아가기")
+//    }
 }
