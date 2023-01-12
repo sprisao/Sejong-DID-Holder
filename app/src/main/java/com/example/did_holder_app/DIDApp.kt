@@ -1,6 +1,7 @@
 package com.example.did_holder_app
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Scaffold
@@ -8,6 +9,7 @@ import androidx.compose.material.Text
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -37,18 +39,34 @@ sealed class BottomNavItem(val screenRoute: String, val title: Int, val icon: In
     )
 }
 
+@Composable
+fun DIDTopBar() {
+    androidx.compose.material.TopAppBar(
+        title = {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(text = "DID Holder")
+            }
+        },
+    )
+}
 
 @Composable
 fun DidApp() {
     val navController = rememberNavController()
-    Scaffold(bottomBar = { DIDBottomNav(navController = navController) }) {
+    // add top appbar with title "Holder"
+    Scaffold(
+        bottomBar = { DIDBottomNav(navController = navController) },
+        topBar = { DIDTopBar() }) {
         Box(Modifier.padding(it))
         NavigationGraph(navController = navController)
     }
 }
 
 @Composable
-fun NavigationGraph(navController: NavHostController, ) {
+fun NavigationGraph(navController: NavHostController) {
     NavHost(navController = navController, startDestination = Constants.DID) {
         composable(Constants.DID) {
             DIDScreen()
