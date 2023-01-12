@@ -1,7 +1,9 @@
 package com.example.did_holder_app.did
 
 import android.util.Base64
-import com.example.did_holder_app.data.model.DidDocument
+import com.example.did_holder_app.data.model.DIDDocument.Authentication
+import com.example.did_holder_app.data.model.DIDDocument.Service
+import com.example.did_holder_app.data.model.DIDDocument.DidDocument
 import com.example.did_holder_app.util.AndroidKeyStoreUtil
 import com.example.did_holder_app.util.Constants.DID_METHODE
 import java.security.*
@@ -39,7 +41,7 @@ class DidInit {
         val didId = "did:$DID_METHODE:$didIdentifier"
 
         val didPublicKey = listOf(
-            com.example.did_holder_app.data.model.PublicKey(
+            com.example.did_holder_app.data.model.DIDDocument.PublicKey(
                 controller = didId,
                 id = "$didId#keys-1",
                 publicKeyBase64 = hashedPubKey.toString(),
@@ -48,14 +50,14 @@ class DidInit {
         )
 
         val didAuthentication = listOf(
-            com.example.did_holder_app.data.model.Authentication(
+            Authentication(
                 type = "RSASignatureAuthentication2023",
                 publicKey = "$didId#keys-1"
             )
         )
 
         val didService = listOf(
-            com.example.did_holder_app.data.model.Service(
+            Service(
                 id = "$didId;indx",
                 type = "IndxService",
                 serviceEndpoint = "https://example.com/indx"

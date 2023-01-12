@@ -9,7 +9,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.example.did_holder_app.data.model.DidDocument
+import com.example.did_holder_app.data.model.DIDDocument.DidDocument
 import com.example.did_holder_app.did.DidInit
 import com.example.did_holder_app.util.DidDataStore
 import com.squareup.moshi.JsonAdapter

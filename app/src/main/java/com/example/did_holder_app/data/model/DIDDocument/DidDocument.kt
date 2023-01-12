@@ -1,4 +1,4 @@
-package com.example.did_holder_app.data.model
+package com.example.did_holder_app.data.model.DIDDocument
 
 
 import com.squareup.moshi.Json
