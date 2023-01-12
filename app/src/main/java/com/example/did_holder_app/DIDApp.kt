@@ -21,6 +21,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.did_holder_app.ui.DIDScreen
+import com.example.did_holder_app.ui.QRResultScreen
 import com.example.did_holder_app.ui.QRScreen
 import com.example.did_holder_app.ui.VCScreen
 import com.example.did_holder_app.util.Constants
@@ -75,7 +76,13 @@ fun NavigationGraph(navController: NavHostController) {
             VCScreen()
         }
         composable(Constants.QR) {
-            QRScreen()
+            QRScreen(navController)
+        }
+        composable("${Constants.QR_RESULT}/{qrResult}") {
+            val qrResult = it.arguments?.getString("qrResult")
+            if (qrResult != null) {
+                QRResultScreen(navController, qrResult)
+            }
         }
     }
 }

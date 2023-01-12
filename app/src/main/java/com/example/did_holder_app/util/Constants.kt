@@ -5,6 +5,7 @@ object Constants {
     const val DID_METHODE = "sjbr"
     const val VC = "VC"
     const val QR = "QR"
+    const val QR_RESULT = "QR_RESULT"
 
     const val DID_KEYSTORE_ALIAS = "did_key"
     const val VC_KEYSTORE_ALIAS = "vc_key"
