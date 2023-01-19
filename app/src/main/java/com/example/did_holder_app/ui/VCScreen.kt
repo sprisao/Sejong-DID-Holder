@@ -40,6 +40,10 @@ fun VCScreen() {
 
     val dataStore = DidDataStore(context)
     val myVC = dataStore.getVC.collectAsState(initial = VC())
+
+    var showVCString by remember {
+        mutableStateOf(false)
+    }
     val myVCString = jsonAdapter.toJson(myVC.value)
 
 //    val myVCString = remember { mutableStateOf(VC(data = null, code = null, msg = "")) }
@@ -54,11 +58,35 @@ fun VCScreen() {
     ) {
         if (myVC.value?.data != null) {
             for (i in myVC.value!!.data!!.credentialSubject) {
-
                 Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.Start) {
                     Text(text = "이름: ${i.name}", )
                     Text(text = "직급: ${i.position}")
                     Text(text = "부서: ${i.type}")
+                }
+                Button(
+                    onClick = {
+                              showVCString = !showVCString
+                    },
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(text = "VC 보기")
+                }
+
+                if(showVCString){
+                    Text(
+                        myVCString,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+                Button(
+                    onClick = {
+                        scope.launch {
+                            dataStore.deleteVc()
+                        }
+                    },
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(text = "VC 삭제 후 재발급")
                 }
             }
         } else {
