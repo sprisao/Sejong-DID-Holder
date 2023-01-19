@@ -37,7 +37,7 @@ fun QRScreen(navController: NavController) {
         rememberPermissionState(android.Manifest.permission.CAMERA)
 
     if (!cameraPermissionState.status.isGranted) {
-        CheckPermission(cameraPermissionState)
+        CheckCameraPermission(cameraPermissionState)
     } else {
         ScanQRCode(navController)
     }
@@ -46,7 +46,7 @@ fun QRScreen(navController: NavController) {
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun CheckPermission(cameraPermissionState: PermissionState) {
+fun CheckCameraPermission(cameraPermissionState: PermissionState) {
     Column(
         /*align items center of screen*/
         modifier = Modifier.fillMaxSize(),
