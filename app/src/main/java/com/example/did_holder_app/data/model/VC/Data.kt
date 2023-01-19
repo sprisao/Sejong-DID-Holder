@@ -9,7 +9,7 @@ data class Data(
     @Json(name = "@context")
     val context: List<String>,
     @Json(name = "credentialSubject")
-    val credentialSubject: List<CredentialSubjectX>,
+    val credentialSubject: List<CredentialSubject>,
     @Json(name = "expirationDate")
     val expirationDate: String,
     @Json(name = "id")
@@ -19,7 +19,7 @@ data class Data(
     @Json(name = "issuer")
     val issuer: String,
     @Json(name = "proof")
-    val proof: ProofX,
+    val proof: Proof,
     @Json(name = "type")
     val type: List<String>
 )

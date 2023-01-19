@@ -1,9 +1,7 @@
 package com.example.did_holder_app.data.api
 
-import com.example.did_holder_app.data.model.VC.VC2
-import retrofit2.Call
+import com.example.did_holder_app.data.model.VC.VC
 import retrofit2.Response
-import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Query
 
@@ -15,5 +13,5 @@ interface DIDApi {
      fun getVC(
         @Query("userid") userid: String,
         @Query("username") username: String
-    ): Response<VC2>
+    ): Response<VC>
 }
