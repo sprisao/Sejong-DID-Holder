@@ -43,23 +43,26 @@ fun DIDScreen() {
         verticalArrangement = Arrangement.Center
     ) {
 
-        Text(
-            myDidDocumentString,
-            style = MaterialTheme.typography.bodySmall,
-        )
-
-        Button(
-            onClick = {
-                scope.launch {
-                    val newDidDocument = didInit.generateDidDocument()
-                    val didDocumentJson = jsonAdapter.toJson(newDidDocument)
-                    dataStore.saveDidDocument(didDocumentJson)
-                }
-            },
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Text(text = "DID 생성")
+        if(myDidDocument.value?.id != null) {
+            Text(
+                myDidDocumentString,
+                style = MaterialTheme.typography.bodySmall,
+            )
+        } else {
+            Button(
+                onClick = {
+                    scope.launch {
+                        val newDidDocument = didInit.generateDidDocument()
+                        val didDocumentJson = jsonAdapter.toJson(newDidDocument)
+                        dataStore.saveDidDocument(didDocumentJson)
+                    }
+                },
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text(text = "DID 생성")
+            }
         }
+
 
         Button(
             onClick = {
