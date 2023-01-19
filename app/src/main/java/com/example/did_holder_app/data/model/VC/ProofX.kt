@@ -5,9 +5,11 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
-data class Proof(
+data class ProofX(
     @Json(name = "created")
     val created: String,
+    @Json(name = "creator")
+    val creator: String,
     @Json(name = "proofPurpose")
     val proofPurpose: String,
     @Json(name = "proofValue")

@@ -5,9 +5,11 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
-data class CredentialSubject(
-    @Json(name = "employee")
-    val employee: Employee,
-    @Json(name = "id")
-    val id: String
+data class VC2(
+    @Json(name = "code")
+    val code: Int,
+    @Json(name = "data")
+    val `data`: Data,
+    @Json(name = "msg")
+    val msg: String
 )
