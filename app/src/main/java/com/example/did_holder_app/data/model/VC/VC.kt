@@ -12,4 +12,6 @@ data class VC(
     val data: Data?,
     @Json(name = "msg")
     val msg: String
-)
+){
+    constructor() : this(0, Data(), "")
+}

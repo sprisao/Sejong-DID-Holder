@@ -22,4 +22,6 @@ data class Data(
     val proof: Proof,
     @Json(name = "type")
     val type: List<String>
-)
+){
+    constructor() : this(listOf(), listOf(), "", "", "", "", Proof(), listOf())
+}

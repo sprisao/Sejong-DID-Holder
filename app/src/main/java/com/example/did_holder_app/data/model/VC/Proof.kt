@@ -18,4 +18,6 @@ data class Proof(
     val type: String,
     @Json(name = "verificationMethod")
     val verificationMethod: String
-)
+){
+    constructor() : this("", "", "", "", "", "")
+}
