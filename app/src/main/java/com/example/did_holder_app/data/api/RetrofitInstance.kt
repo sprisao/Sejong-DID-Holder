@@ -3,38 +3,54 @@ package com.example.did_holder_app.data.api
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
-import java.util.concurrent.TimeUnit
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.SSLContext
+import javax.net.ssl.TrustManager
 
 object RetrofitInstance {
-    private val okHttpClient: OkHttpClient by lazy {
 
-        /* http 통신간 이루어지는 bodylevel의 log들을 가로챈다. */
-        val httpLoggingInterceptor =
-            HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY)
+    class TrustAllCerts : javax.net.ssl.X509TrustManager {
+        override fun checkClientTrusted(
+            chain: Array<java.security.cert.X509Certificate>,
+            authType: String
+        ) {
+        }
 
-        /* Intercepter를 포함하여 OkHttpClient를 빌드한다. */
-        OkHttpClient.Builder().addInterceptor(httpLoggingInterceptor)
-            .connectTimeout(100, TimeUnit.SECONDS).readTimeout(100, TimeUnit.SECONDS)
-            .writeTimeout(100, TimeUnit.SECONDS).build()
+        override fun checkServerTrusted(
+            chain: Array<java.security.cert.X509Certificate>,
+            authType: String
+        ) {
+        }
+
+        override fun getAcceptedIssuers(): Array<java.security.cert.X509Certificate> {
+            return arrayOf()
+        }
     }
 
+    private val trustAllCerts = TrustAllCerts()
+    private val trustAllCertsArray = arrayOf<TrustManager>(trustAllCerts)
+    private val sslContext: SSLContext = SSLContext.getInstance("SSL").apply {
+        init(null, trustAllCertsArray, java.security.SecureRandom())
+    }
+    private val trustAllHosts = HostnameVerifier { _, _ -> true }
+
+
     private const val BASE_URL = "http://192.168.4.85:8080"
-//    192.168.4.85
 
     val moshi: Moshi = Moshi.Builder()
         .add(KotlinJsonAdapterFactory())
         .build()
 
-    private val retrofit: Retrofit by lazy {
-        Retrofit.Builder().addConverterFactory(MoshiConverterFactory.create(moshi)).baseUrl(BASE_URL)
-            .client(okHttpClient).build()
-    }
 
-    val didApi: DIDApi by lazy {
-        retrofit.create(DIDApi::class.java)
-    }
+    private val retrofit = Retrofit.Builder().baseUrl("https://14.63.215.106:8081/v1/holder/")
+        .addConverterFactory(MoshiConverterFactory.create(moshi)).client(
+            OkHttpClient.Builder().sslSocketFactory(
+                sslContext.socketFactory,
+                trustAllCerts
+            ).hostnameVerifier(trustAllHosts).build()
+        ).build()
 
+    val blockchainApi: BlockChainHolderApi = retrofit.create(BlockChainHolderApi::class.java)
 }

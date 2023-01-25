@@ -1,14 +1,22 @@
 package com.example.did_holder_app.ui
 
-import androidx.compose.foundation.layout.*
+import android.widget.Toast
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.example.did_holder_app.data.api.RetrofitInstance
+import com.example.did_holder_app.data.model.Blockchain.BlockchainHolder
 import com.example.did_holder_app.data.model.DIDDocument.DidDocument
 import com.example.did_holder_app.did.DidInit
 import com.example.did_holder_app.util.DidDataStore
@@ -20,20 +28,19 @@ import timber.log.Timber
 @Composable
 fun DIDScreen() {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val dataStore = DidDataStore(context)
     val moshi = com.squareup.moshi.Moshi.Builder()
         .add(KotlinJsonAdapterFactory())
         .build()
     val jsonAdapter: JsonAdapter<DidDocument> = moshi.adapter(DidDocument::class.java)
 
+
     val didInit = DidInit()
-    val scope = rememberCoroutineScope()
-    val dataStore = DidDataStore(context)
 
     val myDidDocument = dataStore.getDidDocument.collectAsState(initial = DidDocument())
-    val myDidDocumentString = jsonAdapter.toJson(myDidDocument.value)
 
-    Timber.d(myDidDocumentString)
-    /*show did from datastore*/
+    val myDidDocumentString = jsonAdapter.toJson(myDidDocument.value)
 
     Column(
         modifier = Modifier
@@ -43,7 +50,7 @@ fun DIDScreen() {
         verticalArrangement = Arrangement.Center
     ) {
 
-        if(myDidDocument.value?.id != null) {
+        if (myDidDocument.value?.id != null) {
             Text(
                 myDidDocumentString,
                 style = MaterialTheme.typography.bodySmall,
@@ -74,19 +81,27 @@ fun DIDScreen() {
         ) {
             Text(text = "DID 삭제")
         }
+        Button(onClick = {
+            scope.launch {
+                val blockchainHolder = BlockchainHolder( myDidDocument.value!!.id ,"AndroidTest")
+                val api = RetrofitInstance.blockchainApi
+                try {
+                    val response = api.postDidDocument(blockchainHolder)
+                    if (response.isSuccessful) {
+                        Timber.d("Success")
+                    } else {
+                        Timber.e(response.toString())
+                        Timber.d("Fail")
+                    }
+                } catch (e: Exception) {
+                    Timber.e(e)
+                }
+            }
+            Toast.makeText(context, myDidDocument.value!!.id, Toast.LENGTH_SHORT).show()
+        }) {
+            Text(text = "블록체인에 저장")
+        }
     }
 
-}
-
-@Composable
-fun GenerateDIDButton(modifier: Modifier) {
-    Button(
-        onClick = { /*TODO*/ },
-        modifier = Modifier
-            .width(120.dp)
-            .height(50.dp)
-    ) {
-        Text(text = "DID 생성", style = MaterialTheme.typography.bodyLarge)
-    }
 }
 
