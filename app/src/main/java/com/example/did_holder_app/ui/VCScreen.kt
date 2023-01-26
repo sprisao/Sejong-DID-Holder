@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.example.did_holder_app.data.api.RetrofitInstance.vcServerApi
 import com.example.did_holder_app.data.model.VC.VC
 import com.example.did_holder_app.util.DidDataStore
 import com.squareup.moshi.JsonAdapter
@@ -98,38 +99,8 @@ fun VCScreen() {
     }
 }
 
-// Define the API Endpoint
-val API_ENDPOINT = "http://192.168.4.85:8080"
-
-// Create a Moshi instance for parsing JSON
-val moshi = Moshi.Builder()
-    .add(KotlinJsonAdapterFactory())
-    .build()
-
-// Create a OkHttpClient instance for handling HTTP requests
-val okHttpClient = OkHttpClient.Builder().build()
-
-// Create a Retrofit instance for the API Endpoint
-val retrofit = Retrofit.Builder()
-    .baseUrl(API_ENDPOINT)
-    .addConverterFactory(MoshiConverterFactory.create(moshi))
-    .client(okHttpClient)
-    .build()
-
-// Define the interface for the API
-interface ApiService {
-    @GET("/v1/test")
-    fun getVC(
-        @Query("userid") userid: String,
-        @Query("username") username: String
-    ): Call<VC>
-}
-
-// Create an instance of the API inteface
-val api = retrofit.create(ApiService::class.java)
-
 private fun getVC(dataStore: DidDataStore, scope: CoroutineScope) {
-    val call = api.getVC("tibob44", "한현수")
+    val call = vcServerApi.getVC("tibob44", "한현수")
     call.enqueue(object : retrofit2.Callback<VC> {
         override fun onResponse(call: Call<VC>, response: Response<VC>) {
             if (response.isSuccessful) {
