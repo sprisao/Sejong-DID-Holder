@@ -83,7 +83,7 @@ fun DIDScreen() {
         }
         Button(onClick = {
             scope.launch {
-                val blockchainHolder = BlockchainHolder( myDidDocument.value!!.id ,"AndroidTest")
+                val blockchainHolder = BlockchainHolder( myDidDocument.value!!.id ,myDidDocumentString.toString())
                 val api = RetrofitInstance.blockchainApi
                 try {
                     val response = api.postDidDocument(blockchainHolder)
