@@ -2,97 +2,85 @@ package com.example.did_holder_app.did
 
 import android.util.Base64
 import com.example.did_holder_app.data.model.DIDDocument.Authentication
-import com.example.did_holder_app.data.model.DIDDocument.Service
 import com.example.did_holder_app.data.model.DIDDocument.DidDocument
+import com.example.did_holder_app.data.model.DIDDocument.PublicKey
+import com.example.did_holder_app.data.model.DIDDocument.Service
 import com.example.did_holder_app.util.AndroidKeyStoreUtil
-import com.example.did_holder_app.util.Constants.DID_METHODE
-import java.security.*
+import java.security.KeyPair
+import java.security.KeyPairGenerator
+import java.security.MessageDigest
+import java.security.Signature
 
 class DidInit {
+    companion object {
+        private const val DID_METHOD = "sjbr"
+        private const val ALGORITHM = "SHA256withRSA"
+    }
 
-    fun generateDidDocument(): DidDocument {
-
-        /* Generate Asymmetric Keypair*/
-        val keyPair: KeyPair = KeyPairGenerator.getInstance("RSA").apply {
+    private val rsaKeyPair: KeyPair by lazy {
+        KeyPairGenerator.getInstance("RSA").apply {
             initialize(2048)
         }.generateKeyPair()
+    }
 
-        val publicKey: PublicKey = keyPair.public
-        val privateKey: PrivateKey = keyPair.private
+    private val encryptedPrivateKey: ByteArray by lazy {
+        AndroidKeyStoreUtil.generateAndSaveKey(rsaKeyPair.private.toString())
+    }
 
-        /* encrypt and save private Key in Keystore*/
-        val encryptedPrivateKey: ByteArray =
-            AndroidKeyStoreUtil.generateAndSaveKey(privateKey.toString())
+    fun generateDidDocument(): DidDocument {
+        val publicKey = rsaKeyPair.public
+        val message = publicKey.toString().toByteArray()
 
-//        val decryptedPrivateKey: String =
-//            AndroidKeyStoreUtil.loadAndDecryptKey(encryptedPrivateKey)
+        val hashedPubKey = hashKey(message)
+        val encodedPubKey = Base64.encodeToString(hashedPubKey, Base64.DEFAULT)
 
-        val message = publicKey.toString()
-        val md = MessageDigest.getInstance("SHA-256")
-        val encryptedPubKey = md.digest(message.toByteArray())
+        val didIdentifier = Base64.encodeToString(hashedPubKey, Base64.NO_WRAP)
+        val didId = "did:$DID_METHOD:$didIdentifier"
 
-        val hashedPubKey = Base64.encodeToString(encryptedPubKey, Base64.DEFAULT)
-
-        // DID Url 부분
-        val didIdentifier = Base64.encodeToString(encryptedPubKey, Base64.NO_WRAP)
-
-        val didContext = "https://www.w3.org/ns/did/v1"
-
-        val didId = "did:$DID_METHODE:$didIdentifier"
-
-        val didPublicKey = listOf(
-            com.example.did_holder_app.data.model.DIDDocument.PublicKey(
-                controller = didId,
-                id = "$didId#keys-1",
-                publicKeyBase64 = hashedPubKey.toString(),
-                type = "RSAVerificationKey2023"
-            )
-        )
-
-        val didAuthentication = listOf(
-            Authentication(
-                type = "RSASignatureAuthentication2023",
-                publicKey = "$didId#keys-1"
-            )
-        )
-
-        val didService = listOf(
-            Service(
-                id = "$didId;indx",
-                type = "IndxService",
-                serviceEndpoint = "https://example.com/indx"
-            )
-        )
 
         return DidDocument(
-            context = didContext,
+            context = "https://www.w3.org/ns/did/v1",
             id = didId,
-            publicKey = didPublicKey,
-            authentication = didAuthentication,
-            service = didService
+            publicKey = listOf(
+                PublicKey(
+                    controller = didId,
+                    id = "$didId#keys-1",
+                    publicKeyBase64 = encodedPubKey,
+                    type = "RSAVerificationKey2023"
+                )
+            ),
+            authentication = listOf(
+                Authentication(
+                    type = "RSASignatureAuthentication2023",
+                    publicKey = "$didId#keys-1"
+                )
+            ),
+            service = listOf(
+                Service(
+                    id = "$didId;indx",
+                    type = "IndxService",
+                    serviceEndpoint = "https://example.com/indx"
+                )
+            )
         )
     }
 
-
-    // ------ DID Auth 부분 ------
-    /* 개인키를 활용하여 Message에 사인*/
-    fun signMessage(privateKey: PrivateKey, message: String): String {
-
-        val signature = Signature.getInstance("SHA256withRSA")
-        signature.initSign(privateKey)
+    fun signMessage(message: String): String {
+        val signature = Signature.getInstance(ALGORITHM)
+        signature.initSign(rsaKeyPair.private)
         signature.update(message.toByteArray())
-        return signature.sign().toString()
+        return Base64.encodeToString(signature.sign(), Base64.DEFAULT)
     }
 
-    /* 개인키로 사인받은 Message를 공개키로 검증*/
-    fun verifySignature(
-        publicKey: PublicKey,
-        message: String,
-        signature: ByteArray
-    ): Boolean {
-        val sig = Signature.getInstance("SHA256withRSA")
-        sig.initVerify(publicKey)
+    fun verifySignature(message: String, signature: String): Boolean {
+        val sig = Signature.getInstance(ALGORITHM)
+        sig.initVerify(rsaKeyPair.public)
         sig.update(message.toByteArray())
-        return sig.verify(signature)
+        return sig.verify(Base64.decode(signature, Base64.DEFAULT))
     }
+
+    private fun hashKey(key: ByteArray): ByteArray {
+        return MessageDigest.getInstance("SHA-256").digest(key)
+    }
+
 }
