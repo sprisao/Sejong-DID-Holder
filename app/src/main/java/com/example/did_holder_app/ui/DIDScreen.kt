@@ -36,7 +36,7 @@ fun DIDScreen() {
     val jsonAdapter: JsonAdapter<DidDocument> = moshi.adapter(DidDocument::class.java)
 
 
-    val didInit = DidInit()
+    val didInit = DidInit(dataStore)
 
     val myDidDocument = dataStore.getDidDocument.collectAsState(initial = DidDocument())
 
@@ -59,9 +59,7 @@ fun DIDScreen() {
             Button(
                 onClick = {
                     scope.launch {
-                        val newDidDocument = didInit.generateDidDocument()
-                        val didDocumentJson = jsonAdapter.toJson(newDidDocument)
-                        dataStore.saveDidDocument(didDocumentJson)
+                        didInit.generateDidDocument()
                     }
                 },
                 modifier = Modifier.padding(16.dp)

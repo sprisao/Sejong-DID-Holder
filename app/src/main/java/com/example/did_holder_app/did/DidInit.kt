@@ -1,7 +1,6 @@
 package com.example.did_holder_app.did
 
 import android.util.Base64
-import androidx.datastore.preferences.core.Preferences
 import com.example.did_holder_app.data.model.DIDDocument.Authentication
 import com.example.did_holder_app.data.model.DIDDocument.DidDocument
 import com.example.did_holder_app.data.model.DIDDocument.PublicKey
@@ -17,7 +16,7 @@ import java.security.KeyPair
 import java.security.KeyPairGenerator
 import java.security.MessageDigest
 
-class DidInit(private val dataStore: DidDataStore<Preferences>) {
+class DidInit(private val dataStore: DidDataStore) {
 
     val moshi: Moshi = Moshi.Builder()
         .add(KotlinJsonAdapterFactory())
