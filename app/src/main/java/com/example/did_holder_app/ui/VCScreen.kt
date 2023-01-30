@@ -20,13 +20,8 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import okhttp3.OkHttpClient
 import retrofit2.Call
 import retrofit2.Response
-import retrofit2.Retrofit
-import retrofit2.converter.moshi.MoshiConverterFactory
-import retrofit2.http.GET
-import retrofit2.http.Query
 
 val jsonAdapter : JsonAdapter<VC> = Moshi.Builder()
     .add(KotlinJsonAdapterFactory())
@@ -40,7 +35,7 @@ fun VCScreen() {
     /*set vcText state*/
 
     val dataStore = DidDataStore(context)
-    val myVC = dataStore.getVC.collectAsState(initial = VC())
+    val myVC = dataStore.vcFlow.collectAsState(initial = VC())
 
     var showVCString by remember {
         mutableStateOf(false)
@@ -82,7 +77,7 @@ fun VCScreen() {
                 Button(
                     onClick = {
                         scope.launch {
-                            dataStore.deleteVc()
+                            dataStore.clearVc()
                         }
                     },
                     modifier = Modifier.padding(16.dp)
