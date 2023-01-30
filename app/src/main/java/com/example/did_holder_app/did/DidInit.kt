@@ -32,11 +32,9 @@ class DidInit {
         val message = publicKey.toString().toByteArray()
 
         val hashedPubKey = hashKey(message)
-        val encodedPubKey = Base64.encodeToString(hashedPubKey, Base64.DEFAULT)
+        val encodedPubKey = Base64.encodeToString(hashedPubKey, Base64.NO_WRAP)
 
-        val didIdentifier = Base64.encodeToString(hashedPubKey, Base64.NO_WRAP)
-        val didId = "did:$DID_METHOD:$didIdentifier"
-
+        val didId = "did:$DID_METHOD:$encodedPubKey"
 
         return DidDocument(
             context = "https://www.w3.org/ns/did/v1",
