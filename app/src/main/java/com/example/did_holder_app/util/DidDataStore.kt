@@ -6,68 +6,77 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.example.did_holder_app.data.model.DIDDocument.DidDocument
 import com.example.did_holder_app.data.model.VC.VC
-import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import timber.log.Timber
 
-class DidDataStore(private val context: Context) {
-
-    val moshi: Moshi = Moshi.Builder()
-        .add(KotlinJsonAdapterFactory())
-        .build()
-
-    private val jsonAdapter: JsonAdapter<DidDocument> =
-        moshi.adapter(DidDocument::class.java)
-
-    private object PreferencesKeys {
-        val DID_DOCUMENT = stringPreferencesKey("did_document")
-        val VC = stringPreferencesKey("vc")
-    }
-
+class DidDataStore(context: Context) {
     companion object {
         private val Context.dataStore by preferencesDataStore(Constants.DATASTORE_NAME)
     }
 
-    val getDidDocument: Flow<DidDocument?> = context.dataStore.data.map { preferences ->
-        preferences[PreferencesKeys.DID_DOCUMENT]?.let {
-            Timber.d("getDidDocument: $it")
-            jsonAdapter.fromJson(it)
+    private val moshi: Moshi = Moshi.Builder()
+        .add(KotlinJsonAdapterFactory())
+        .build()
+
+    // Adapters
+    private val didDocumentAdapter = moshi.adapter(DidDocument::class.java)
+    private val vcAdapter = moshi.adapter(VC::class.java)
+
+    private val dataStore = context.dataStore
+
+    object Key {
+        val DID_DOCUMENT = stringPreferencesKey("did_document")
+        val VC = stringPreferencesKey("vc")
+    }
+
+
+    // Did Document Flow
+
+    val didDocumentFlow: Flow<DidDocument?> = dataStore.data.map {
+        val didDocumentString = it[Key.DID_DOCUMENT]
+        if (didDocumentString != null) {
+            didDocumentAdapter.fromJson(didDocumentString)
+        } else {
+            null
         }
     }
 
     suspend fun saveDidDocument(didDocument: String) {
-        context.dataStore.edit { preferences ->
-            preferences[PreferencesKeys.DID_DOCUMENT] = didDocument
+        dataStore.edit {
+            it[Key.DID_DOCUMENT] = didDocument
         }
     }
 
-    suspend fun deleteDidDocument() {
-        context.dataStore.edit { preferences ->
-            preferences.remove(PreferencesKeys.DID_DOCUMENT)
-        }
-    }
-
-
-    val getVC: Flow<VC?> = context.dataStore.data.map { preferences ->
-        preferences[PreferencesKeys.VC]?.let {
-            Timber.d("getVC: $it")
-            moshi.adapter(VC::class.java).fromJson(it)
+    suspend fun clearDidDocument() {
+        dataStore.edit {
+            it.remove(Key.DID_DOCUMENT)
         }
     }
 
 
-     suspend fun saveVc(vc: String) {
-        context.dataStore.edit { preferences ->
-            preferences[PreferencesKeys.VC] = vc
+    // VC Flow
+
+    val vcFlow: Flow<VC?> = context.dataStore.data.map {
+        val vcString = it[Key.VC]
+        if (vcString != null) {
+            vcAdapter.fromJson(vcString)
+        } else {
+            null
         }
     }
 
-    suspend fun deleteVc() {
-        context.dataStore.edit { preferences ->
-            preferences.remove(PreferencesKeys.VC)
+
+    suspend fun saveVc(vc: String) {
+        dataStore.edit {
+            it[Key.VC] = vc
+        }
+    }
+
+    suspend fun clearVc() {
+        dataStore.edit {
+            it.remove(Key.VC)
         }
     }
 }
