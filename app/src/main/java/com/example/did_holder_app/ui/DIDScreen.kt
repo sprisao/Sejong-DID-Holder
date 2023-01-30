@@ -31,16 +31,30 @@ fun DIDScreen() {
     val dataStore = DidDataStore(context)
     val myDidDocument = dataStore.didDocumentFlow.collectAsState(initial = DidDocument())
 
-    if (myDidDocument.value?.id != null) {
-        YesDidScreen(scope = scope, dataStore = dataStore, didDocument = myDidDocument.value!!)
+    val state = if (myDidDocument.value?.id != null) {
+        DIDState.Existing(didDocument = myDidDocument.value!!)
     } else {
-        NoDidScreen(scope = scope, dataStore = dataStore)
+        DIDState.None
+    }
+
+    DIDScreenState(scope, dataStore, state)
+}
+
+@Composable
+fun DIDScreenState(scope: CoroutineScope, dataStore: DidDataStore, state: DIDState) {
+    when (state) {
+        is DIDState.None -> EmptyDidScreen(scope, dataStore)
+        is DIDState.Existing -> WithDidScreen(scope, dataStore, state.didDocument)
     }
 }
 
+sealed class DIDState {
+    object None : DIDState()
+    data class Existing(val didDocument: DidDocument) : DIDState()
+}
 
 @Composable
-fun NoDidScreen(scope: CoroutineScope, dataStore: DidDataStore) {
+fun EmptyDidScreen(scope: CoroutineScope, dataStore: DidDataStore) {
     val didInit = DidInit(dataStore)
     Column(
         modifier = Modifier
@@ -64,8 +78,8 @@ fun NoDidScreen(scope: CoroutineScope, dataStore: DidDataStore) {
 
 
 @Composable
-fun YesDidScreen(scope: CoroutineScope, dataStore: DidDataStore, didDocument: DidDocument) {
-    var context = LocalContext.current
+fun WithDidScreen(scope: CoroutineScope, dataStore: DidDataStore, didDocument: DidDocument) {
+    val context = LocalContext.current
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -90,7 +104,6 @@ fun YesDidScreen(scope: CoroutineScope, dataStore: DidDataStore, didDocument: Di
         }
         Button(onClick = {
             scope.launch {
-                // todo convert diddocument to string
                 val blockchainHolder =
                     BlockchainHolder(didDocument.id, didDocument.toString())
 
