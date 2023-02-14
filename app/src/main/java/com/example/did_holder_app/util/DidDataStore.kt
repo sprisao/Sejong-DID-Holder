@@ -83,12 +83,7 @@ class DidDataStore(context: Context) {
 
 
     val userseqFlow: Flow<Int?> = context.dataStore.data.map {
-        val userseqString = it[Key.USERSEQ]
-        if (userseqString != null) {
-            userseqString.toInt()
-        } else {
-            null
-        }
+        it[Key.USERSEQ]?.toInt()
     }
 
     suspend fun saveUserseq(userseq: Int) {
