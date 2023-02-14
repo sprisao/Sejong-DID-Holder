@@ -24,6 +24,7 @@ import com.example.did_holder_app.ui.DIDScreen
 import com.example.did_holder_app.ui.QRResultScreen
 import com.example.did_holder_app.ui.QRScreen
 import com.example.did_holder_app.ui.VCScreen
+import com.example.did_holder_app.ui.viewmodel.SignUpScreen
 import com.example.did_holder_app.util.Constants
 
 
@@ -73,10 +74,13 @@ fun NavigationGraph(navController: NavHostController) {
             DIDScreen()
         }
         composable(Constants.VC) {
-            VCScreen()
+            VCScreen(navController)
         }
         composable(Constants.QR) {
             QRScreen(navController)
+        }
+        composable(Constants.SIGN_UP) {
+            SignUpScreen()
         }
         composable("${Constants.QR_RESULT}/{qrResult}") {
             val qrResult = it.arguments?.getString("qrResult")
