@@ -52,3 +52,12 @@ data class SignUpData(
     @Json(name = "userseq")
     val userseq: Int?,
 )
+
+
+@JsonClass(generateAdapter = true)
+data class VCRequest(
+    @Json(name = "userseq")
+    val userseq: Int,
+    @Json(name = "holderdid")
+    val holderdid: String,
+)
