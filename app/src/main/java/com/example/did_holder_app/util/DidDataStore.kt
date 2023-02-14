@@ -5,7 +5,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.example.did_holder_app.data.model.DIDDocument.DidDocument
-import com.example.did_holder_app.data.model.VC.VC
+import com.example.did_holder_app.data.model.VC.VCResponse
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.flow.Flow
@@ -22,7 +22,7 @@ class DidDataStore(context: Context) {
 
     // Adapters
     private val didDocumentAdapter = moshi.adapter(DidDocument::class.java)
-    private val vcAdapter = moshi.adapter(VC::class.java)
+    private val vcResponseAdapter = moshi.adapter(VCResponse::class.java)
 
     private val dataStore = context.dataStore
 
@@ -59,10 +59,10 @@ class DidDataStore(context: Context) {
 
     // VC Flow
 
-    val vcFlow: Flow<VC?> = context.dataStore.data.map {
+    val vcResponseFlow: Flow<VCResponse?> = context.dataStore.data.map {
         val vcString = it[Key.VC]
         if (vcString != null) {
-            vcAdapter.fromJson(vcString)
+            vcResponseAdapter.fromJson(vcString)
         } else {
             null
         }

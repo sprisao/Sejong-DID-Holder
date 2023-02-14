@@ -5,7 +5,7 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
-data class VC(
+data class VCResponse(
     @Json(name = "code")
     val code: Int?,
     @Json(name = "data")
