@@ -44,7 +44,9 @@ object RetrofitInstance {
     private val trustAllHosts = HostnameVerifier { _, _ -> true }
 
     // Urls
-    private const val VC_SERVER_URL = "http://192.168.4.85:8080"
+    private const val VC_SERVER_URL = "https://14.63.215.106:8080"
+    private const val VC_HOLDER_URL = "https://14.63.215.106:8081"
+    private const val RELAY_SERVER_URL = "https://14.63.215.106:8082"
     private const val BLOCKCHAIN_HOLDER_URL = "https://14.63.215.106:8081/v1/holder/"
 
     // BlockChain에 DidDocument 저장
@@ -60,9 +62,12 @@ object RetrofitInstance {
     // Issuer와 통신하여 VC 발급
     private val retrofit_vc = Retrofit.Builder()
         .baseUrl(VC_SERVER_URL)
-        .addConverterFactory(MoshiConverterFactory.create(moshi))
-        .client(OkHttpClient.Builder().build())
-        .build()
+        .addConverterFactory(MoshiConverterFactory.create(moshi)).client(
+            OkHttpClient.Builder().sslSocketFactory(
+                sslContext.socketFactory,
+                trustAllCerts
+            ).hostnameVerifier(trustAllHosts).build()
+        ).build()
 
     //Api
     val blockchainApi: BlockchainApi =

@@ -1,8 +1,10 @@
 package com.example.did_holder_app.data.api
 
+import com.example.did_holder_app.data.model.VC.SignUpRequest
+import com.example.did_holder_app.data.model.VC.SignUpResponse
 import com.example.did_holder_app.data.model.VC.VC
 import retrofit2.Call
-import retrofit2.Response
+import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Query
@@ -16,4 +18,8 @@ interface VCApi {
         @Query("userid") userid: String,
         @Query("username") username: String
     ): Call<VC>
+
+    @POST("/v1/member")
+    fun createUser(@Body request: SignUpRequest): Call<SignUpResponse>
+
 }
