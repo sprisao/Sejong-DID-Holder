@@ -3,6 +3,7 @@ package com.example.did_holder_app.data.api
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import javax.net.ssl.HostnameVerifier
@@ -49,10 +50,12 @@ object RetrofitInstance {
     private const val RELAY_SERVER_URL = "https://14.63.215.106:8082"
     private const val BLOCKCHAIN_HOLDER_URL = "https://14.63.215.106:8081/v1/holder/"
 
+    val httpLoggingInterceptor = HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY)
+
     // BlockChain에 DidDocument 저장
     private val retrofit_blockchain = Retrofit.Builder().baseUrl(BLOCKCHAIN_HOLDER_URL)
         .addConverterFactory(MoshiConverterFactory.create(moshi)).client(
-            OkHttpClient.Builder().sslSocketFactory(
+            OkHttpClient.Builder().addInterceptor(httpLoggingInterceptor).sslSocketFactory(
                 sslContext.socketFactory,
                 trustAllCerts
             ).hostnameVerifier(trustAllHosts).build()
@@ -63,7 +66,7 @@ object RetrofitInstance {
     private val retrofit_vc = Retrofit.Builder()
         .baseUrl(VC_SERVER_URL)
         .addConverterFactory(MoshiConverterFactory.create(moshi)).client(
-            OkHttpClient.Builder().sslSocketFactory(
+            OkHttpClient.Builder().addInterceptor(httpLoggingInterceptor).sslSocketFactory(
                 sslContext.socketFactory,
                 trustAllCerts
             ).hostnameVerifier(trustAllHosts).build()
