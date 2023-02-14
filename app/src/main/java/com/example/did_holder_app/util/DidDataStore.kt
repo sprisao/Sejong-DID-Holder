@@ -29,6 +29,7 @@ class DidDataStore(context: Context) {
     object Key {
         val DID_DOCUMENT = stringPreferencesKey("did_document")
         val VC = stringPreferencesKey("vc")
+        val USERSEQ = stringPreferencesKey("userseq")
     }
 
 
@@ -79,4 +80,28 @@ class DidDataStore(context: Context) {
             it.remove(Key.VC)
         }
     }
+
+
+    val userseqFlow: Flow<Int?> = context.dataStore.data.map {
+        val userseqString = it[Key.USERSEQ]
+        if (userseqString != null) {
+            userseqString.toInt()
+        } else {
+            null
+        }
+    }
+
+    suspend fun saveUserseq(userseq: Int) {
+        dataStore.edit {
+            it[Key.USERSEQ] = userseq.toString()
+        }
+    }
+
+    suspend fun clearUserseq() {
+        dataStore.edit {
+            it.remove(Key.USERSEQ)
+        }
+    }
+
+
 }
