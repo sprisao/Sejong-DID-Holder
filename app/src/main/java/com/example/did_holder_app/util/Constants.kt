@@ -4,8 +4,10 @@ object Constants {
     const val DID = "DID"
     const val DID_METHODE = "sjbr"
     const val VC = "VC"
+    const val VC_GRAPH = "vc_graph"
     const val QR = "QR"
     const val QR_RESULT = "QR_RESULT"
+    const val SIGN_UP = "SIGN_UP"
 
     const val DID_KEYSTORE_ALIAS = "did_key"
     const val VC_KEYSTORE_ALIAS = "vc_key"
