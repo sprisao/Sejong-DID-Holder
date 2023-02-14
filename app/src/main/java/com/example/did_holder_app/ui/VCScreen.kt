@@ -12,8 +12,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.example.did_holder_app.data.api.RetrofitInstance.vcServerApi
 import com.example.did_holder_app.data.model.VC.VC
+import com.example.did_holder_app.util.Constants
 import com.example.did_holder_app.util.DidDataStore
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
@@ -29,7 +31,7 @@ val jsonAdapter : JsonAdapter<VC> = Moshi.Builder()
     .adapter(VC::class.java)
 
 @Composable
-fun VCScreen() {
+fun VCScreen(navController: NavController) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     /*set vcText state*/
@@ -52,43 +54,47 @@ fun VCScreen() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        if (myVC.value?.data != null) {
-            for (i in myVC.value!!.data!!.credentialSubject) {
-                Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.Start) {
-                    Text(text = "이름: ${i.name}", )
-                    Text(text = "직급: ${i.position}")
-                    Text(text = "부서: ${i.type}")
-                }
-                Button(
-                    onClick = {
-                              showVCString = !showVCString
-                    },
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text(text = "VC 보기")
-                }
-
-                if(showVCString){
-                    Text(
-                        myVCString,
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                }
-                Button(
-                    onClick = {
-                        scope.launch {
-                            dataStore.clearVc()
-                        }
-                    },
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text(text = "VC 삭제 후 재발급")
-                }
-            }
-        } else {
-            Button(onClick = { scope.launch { getVC(dataStore, scope) } }) {
-                Text(text = "사원증 발급 요청(VC)", style = MaterialTheme.typography.labelSmall)
-            }
+//        if (myVC.value?.data != null) {
+//            for (i in myVC.value!!.data!!.credentialSubject) {
+//                Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.Start) {
+//                    Text(text = "이름: ${i.name}", )
+//                    Text(text = "직급: ${i.position}")
+//                    Text(text = "부서: ${i.type}")
+//                }
+//                Button(
+//                    onClick = {
+//                              showVCString = !showVCString
+//                    },
+//                    modifier = Modifier.padding(16.dp)
+//                ) {
+//                    Text(text = "VC 보기")
+//                }
+//
+//                if(showVCString){
+//                    Text(
+//                        myVCString,
+//                        style = MaterialTheme.typography.bodySmall,
+//                    )
+//                }
+//                Button(
+//                    onClick = {
+//                        scope.launch {
+//                            dataStore.clearVc()
+//                        }
+//                    },
+//                    modifier = Modifier.padding(16.dp)
+//                ) {
+//                    Text(text = "VC 삭제 후 재발급")
+//                }
+//            }
+//        } else {
+//            Button(onClick = { scope.launch { getVC(dataStore, scope) } }) {
+//                Text(text = "사원증 발급 요청(VC)", style = MaterialTheme.typography.labelSmall)
+//            }
+//        }
+        Button(onClick = {navController.navigate(Constants.SIGN_UP){
+        } }) {
+            Text(text = "회원가입", style = MaterialTheme.typography.labelSmall)
         }
 
     }
