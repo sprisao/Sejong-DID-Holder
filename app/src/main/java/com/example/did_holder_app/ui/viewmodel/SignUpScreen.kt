@@ -1,5 +1,7 @@
 package com.example.did_holder_app.ui.viewmodel
 
+import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -34,7 +36,7 @@ fun SignUpScreen(navController: NavController) {
         Text(text = "SignUpScreen")
         UserSignupScreen(onSignup = { user ->
             scope.launch {
-                signupUser(user, dataStore, scope, navController)
+                signupUser(user, dataStore, scope, navController, context)
             }
         })
     }
@@ -44,7 +46,8 @@ private fun signupUser(
     request: SignUpRequest,
     dataStore: DidDataStore,
     scope: CoroutineScope,
-    navController: NavController
+    navController: NavController,
+    context: Context,
 ) {
     val call = RetrofitInstance.vcServerApi.createUser(request)
     call.enqueue(object : retrofit2.Callback<SignUpResponse> {
@@ -53,20 +56,28 @@ private fun signupUser(
             response: Response<SignUpResponse>
         ) {
             if (response.isSuccessful) {
-                Timber.d("Success")
-                Timber.d(response.body().toString())
                 /*get userseq from SignUpRequest */
-                val userseq = response.body()?.data?.userseq
-                scope.launch { dataStore.saveUserseq(userseq!!) }
-                navController.popBackStack()
+                if (response.body()!!.code == 0) {
+                    Timber.d("Success")
+                    Timber.d(response.body().toString())
+                    val userseq = response.body()?.data?.userseq
+                    scope.launch { dataStore.saveUserseq(userseq!!) }
+                    navController.popBackStack()
+                } else if (response.body()!!.code != 0) {
+                    Toast.makeText(
+                        context,
+                        "${response.body()!!.code}: ${response.body()!!.msg}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
             } else {
-                println("Error")
+                Toast.makeText(context, "Error", Toast.LENGTH_SHORT).show()
                 /*show dialog*/
             }
         }
 
         override fun onFailure(call: Call<SignUpResponse>, t: Throwable) {
-            println(t.message)
+            Toast.makeText(context, "Error", Toast.LENGTH_SHORT).show()
         }
 
     })

@@ -76,7 +76,7 @@ fun VCScreen(navController: NavController) {
 
             Button(onClick = {
                 scope.launch {
-                    getVC(dataStore, scope, userSeq.value!!, myDidDocument.value!!)
+                    getVC(dataStore, scope, userSeq.value!!, myDidDocument.value!!, context)
                 }
             }) {
                 Text(text = "VC생성", style = MaterialTheme.typography.labelSmall)
@@ -140,7 +140,13 @@ fun VCScreen(navController: NavController) {
     }
 }
 
-fun getVC(dataStore: DidDataStore, scope: CoroutineScope, userSeq: Int, didDocument: DidDocument) {
+fun getVC(
+    dataStore: DidDataStore,
+    scope: CoroutineScope,
+    userSeq: Int,
+    didDocument: DidDocument,
+    context: Context
+) {
     val vcRequest = VCRequest(
         userseq = userSeq,
         holderdid = didDocument.id,
@@ -151,19 +157,36 @@ fun getVC(dataStore: DidDataStore, scope: CoroutineScope, userSeq: Int, didDocum
         override fun onResponse(call: Call<VCResponse>, response: Response<VCResponse>) {
             if (response.isSuccessful) {
                 /*set vcText state*/
-                val vcJson = jsonAdapter.toJson(response.body())
-                scope.launch { dataStore.saveVc(vcJson) }
-                /*show modal*/
-                Timber.d(response.body().toString())
-                Timber.d("VC발급 성공")
+                if (response.body()!!.code == 0) {
+                    val vcJson = jsonAdapter.toJson(response.body())
+                    scope.launch { dataStore.saveVc(vcJson) }
+                    /*show modal*/
+                    Timber.d(response.body().toString())
+                    Timber.d("VC발급 성공")
+                } else if (response.body()!!.code != 0) {
+                    Timber.d(response.body().toString())
+                    Toast.makeText(
+                        context,
+                        "${response.body()!!.code}: ${response.body()!!.msg}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
 
             } else {
-                println("Error")
+                Toast.makeText(
+                    context,
+                    response.errorBody().toString(),
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
 
         override fun onFailure(call: Call<VCResponse>, t: Throwable) {
-            println(t.message)
+            Toast.makeText(
+                context,
+                t.message,
+                Toast.LENGTH_SHORT
+            ).show()
         }
     })
 }
@@ -180,20 +203,22 @@ private fun signInUser(
             call: Call<SignInResponse>, response: Response<SignInResponse>
         ) {
             if (response.isSuccessful) {
-                Timber.d("Success")
-                Timber.d(response.body().toString())
-                /*get userseq from SignUpRequest */
                 if (response.body()!!.code == 0) {
+                    Timber.d("Success")
+                    Timber.d(response.body().toString())
                     val userseq = response.body()?.data?.userSequence
                     scope.launch {
                         dataStore.saveUserseq(userseq!!)
                     }
                 } else if (response.body()!!.code != 0) {
-                    /*Show toast*/
-                    Toast.makeText(context, response.body()!!.msg, Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        context,
+                        "${response.body()!!.code}: ${response.body()!!.msg}",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             } else {
-                println("Error")
+                Toast.makeText(context, "로그인 실패 : 응답 요청 실패", Toast.LENGTH_SHORT).show()
             }
         }
 

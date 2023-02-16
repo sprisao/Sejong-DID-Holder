@@ -108,7 +108,6 @@ fun WithDidScreen(scope: CoroutineScope, dataStore: DidDataStore, didDocument: D
                     BlockchainHolder(didDocument.id, didDocument.toString())
 
                 val api = RetrofitInstance.blockchainApi
-
                 try {
                     val response = api.postDidDocument(blockchainHolder)
                     if (response.isSuccessful) {
@@ -116,10 +115,10 @@ fun WithDidScreen(scope: CoroutineScope, dataStore: DidDataStore, didDocument: D
                         Toast.makeText(context, "저장 성공", Toast.LENGTH_SHORT).show()
                     } else {
                         Timber.e(response.toString())
-                        Timber.d("Failed to save to blockchain")
+                        Toast.makeText(context, "저장 실패", Toast.LENGTH_SHORT).show()
                     }
                 } catch (e: Exception) {
-                    Timber.e(e)
+                    Toast.makeText(context, e.toString(), Toast.LENGTH_SHORT).show()
                 }
             }
         }) {
