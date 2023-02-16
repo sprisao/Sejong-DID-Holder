@@ -93,7 +93,7 @@ data class SignInData(
 @JsonClass(generateAdapter = true)
 data class VCRequest(
     @Json(name = "userseq")
-    val userseq: Int,
+    val userseq: Int?,
     @Json(name = "holderdid")
-    val holderdid: String,
+    val holderdid: String?,
 )
