@@ -46,14 +46,14 @@ object RetrofitInstance {
 
     // Urls
     private const val VC_SERVER_URL = "https://14.63.215.106:8080"
-    private const val VC_HOLDER_URL = "https://14.63.215.106:8081"
+    private const val VC_HOLDER_URL = "http://14.63.215.106:8081"
     private const val RELAY_SERVER_URL = "https://14.63.215.106:8082"
     private const val BLOCKCHAIN_HOLDER_URL = "https://14.63.215.106:8081/v1/holder/"
 
     val httpLoggingInterceptor = HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY)
 
     // BlockChain에 DidDocument 저장
-    private val retrofit_blockchain = Retrofit.Builder().baseUrl(BLOCKCHAIN_HOLDER_URL)
+    private val retrofit_blockchain = Retrofit.Builder().baseUrl(VC_HOLDER_URL)
         .addConverterFactory(MoshiConverterFactory.create(moshi)).client(
             OkHttpClient.Builder().addInterceptor(httpLoggingInterceptor).sslSocketFactory(
                 sslContext.socketFactory,
