@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.example.did_holder_app.data.api.RetrofitInstance
 import com.example.did_holder_app.data.model.VC.SignUpRequest
 import com.example.did_holder_app.data.model.VC.SignUpResponse
@@ -23,7 +24,7 @@ import retrofit2.Response
 import timber.log.Timber
 
 @Composable
-fun SignUpScreen() {
+fun SignUpScreen(navController: NavController) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val dataStore = DidDataStore(context)
@@ -33,13 +34,18 @@ fun SignUpScreen() {
         Text(text = "SignUpScreen")
         UserSignupScreen(onSignup = { user ->
             scope.launch {
-                signupUser(user, dataStore, scope)
+                signupUser(user, dataStore, scope, navController)
             }
         })
     }
 }
 
-private fun signupUser(request: SignUpRequest, dataStore: DidDataStore, scope: CoroutineScope) {
+private fun signupUser(
+    request: SignUpRequest,
+    dataStore: DidDataStore,
+    scope: CoroutineScope,
+    navController: NavController
+) {
     val call = RetrofitInstance.vcServerApi.createUser(request)
     call.enqueue(object : retrofit2.Callback<SignUpResponse> {
         override fun onResponse(
@@ -52,8 +58,10 @@ private fun signupUser(request: SignUpRequest, dataStore: DidDataStore, scope: C
                 /*get userseq from SignUpRequest */
                 val userseq = response.body()?.data?.userseq
                 scope.launch { dataStore.saveUserseq(userseq!!) }
+                navController.popBackStack()
             } else {
                 println("Error")
+                /*show dialog*/
             }
         }
 

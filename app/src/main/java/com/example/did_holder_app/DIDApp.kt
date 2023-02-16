@@ -80,7 +80,7 @@ fun NavigationGraph(navController: NavHostController) {
             QRScreen(navController)
         }
         composable(Constants.SIGN_UP) {
-            SignUpScreen()
+            SignUpScreen(navController)
         }
         composable("${Constants.QR_RESULT}/{qrResult}") {
             val qrResult = it.arguments?.getString("qrResult")
