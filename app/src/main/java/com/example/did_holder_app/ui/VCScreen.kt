@@ -1,9 +1,7 @@
 package com.example.did_holder_app.ui
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.OutlinedTextField
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -11,12 +9,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.did_holder_app.data.api.RetrofitInstance
 import com.example.did_holder_app.data.api.RetrofitInstance.vcServerApi
 import com.example.did_holder_app.data.model.DIDDocument.DidDocument
-import com.example.did_holder_app.data.model.VC.VCRequest
-import com.example.did_holder_app.data.model.VC.VCResponse
+import com.example.did_holder_app.data.model.VC.*
 import com.example.did_holder_app.util.Constants
 import com.example.did_holder_app.util.DidDataStore
 import com.squareup.moshi.JsonAdapter
@@ -24,7 +23,6 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import okhttp3.internal.userAgent
 import retrofit2.Call
 import retrofit2.Response
 import timber.log.Timber
@@ -53,6 +51,10 @@ fun VCScreen(navController: NavController) {
 
     /*get userSeqFlow*/
     val userSeq = dataStore.userseqFlow.collectAsState(0)
+    Timber.d("userSeq: ${userSeq.value.toString()}")
+
+    var userId: String by remember { mutableStateOf("androidTest") }
+    var userPassword: String by remember { mutableStateOf("androidTest1") }
 
     Column(
         modifier = Modifier
@@ -62,7 +64,7 @@ fun VCScreen(navController: NavController) {
         verticalArrangement = Arrangement.Center
     ) {
 
-        if (userSeq.value != 0 && myVCResponse.value?.data == null) {
+        if ((userSeq.value != 0 && userSeq.value != null) && myVCResponse.value?.data == null) {
             /*회원가입=true, VC발급=false*/
 
             Button(onClick = {
@@ -72,7 +74,16 @@ fun VCScreen(navController: NavController) {
             }) {
                 Text(text = "VC생성", style = MaterialTheme.typography.labelSmall)
             }
-        } else if (userSeq.value != 0 && myVCResponse.value?.data != null) {
+            Button(
+                onClick = {
+                    scope.launch {
+                        dataStore.clearUserseq()
+                    }
+                },
+            ) {
+                Text(text = "로그아웃", style = MaterialTheme.typography.labelSmall)
+            }
+        } else if (myVCResponse.value?.data != null) {
             /*회원가입=true, VC발급=true*/
 
             Button(onClick = {
@@ -83,6 +94,31 @@ fun VCScreen(navController: NavController) {
         } else {
             /*회원가입=false, VC발급=false*/
 
+            /*TextField with us*/
+
+            OutlinedTextField(
+                value = userId,
+                onValueChange = { userId = it },
+                label = { Text("User ID") },
+                singleLine = true
+            )
+
+            OutlinedTextField(
+                value = userPassword,
+                onValueChange = { userPassword = it },
+                label = { Text("Password") },
+                singleLine = true,
+                visualTransformation = PasswordVisualTransformation()
+            )
+
+            Button(onClick = {
+                val signInRequest = SignInRequest(userId, userPassword)
+                signInUser(signInRequest, dataStore, scope)
+            }) {
+                Text(text = "로그인", style = MaterialTheme.typography.labelSmall)
+            }
+
+            Text(text = "또는", style = MaterialTheme.typography.labelSmall)
             Button(onClick = {
                 navController.navigate(Constants.SIGN_UP) {
                 }
@@ -137,8 +173,8 @@ fun getVC(dataStore: DidDataStore, scope: CoroutineScope, userSeq: Int, didDocum
         holderdid = didDocument.id,
     )
 
-    val call = vcRequest?.let { vcServerApi.getVC(it) }
-    call!!.enqueue(object : retrofit2.Callback<VCResponse> {
+    val call = vcRequest.let { vcServerApi.getVC(it) }
+    call.enqueue(object : retrofit2.Callback<VCResponse> {
         override fun onResponse(call: Call<VCResponse>, response: Response<VCResponse>) {
             if (response.isSuccessful) {
                 /*set vcText state*/
@@ -156,5 +192,30 @@ fun getVC(dataStore: DidDataStore, scope: CoroutineScope, userSeq: Int, didDocum
         override fun onFailure(call: Call<VCResponse>, t: Throwable) {
             println(t.message)
         }
+    })
+}
+
+private fun signInUser(request: SignInRequest, dataStore: DidDataStore, scope: CoroutineScope) {
+    val call = vcServerApi.login(request)
+    call.enqueue(object : retrofit2.Callback<SignInResponse> {
+        override fun onResponse(
+            call: Call<SignInResponse>,
+            response: Response<SignInResponse>
+        ) {
+            if (response.isSuccessful) {
+                Timber.d("Success")
+                Timber.d(response.body().toString())
+                /*get userseq from SignUpRequest */
+                val userseq = response.body()?.data?.userSequence
+                scope.launch { dataStore.saveUserseq(userseq!!) }
+            } else {
+                println("Error")
+            }
+        }
+
+        override fun onFailure(call: Call<SignInResponse>, t: Throwable) {
+            println(t.message)
+        }
+
     })
 }

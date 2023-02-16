@@ -17,6 +17,12 @@ data class VCResponse(
 }
 
 @JsonClass(generateAdapter = true)
+data class SignInRequest(
+    @Json(name = "userid") val userId: String,
+    @Json(name = "userpass") val userPass: String,
+)
+
+@JsonClass(generateAdapter = true)
 data class SignUpRequest(
     @Json(name = "userid") val userId: String,
     @Json(name = "userpass") val userPass: String,
@@ -26,13 +32,23 @@ data class SignUpRequest(
 )
 
 @JsonClass(generateAdapter = true)
+data class SignInResponse(
+    @Json(name = "data")
+    val data: SignInData?,
+    @Json(name = "code")
+    val code: Int?,
+    @Json(name = "msg")
+    val msg: String?
+)
+
+@JsonClass(generateAdapter = true)
 data class SignUpResponse(
     @Json(name = "data")
     val data: SignUpData?,
     @Json(name = "code")
     val code: Int?,
     @Json(name = "msg")
-    val msg: String
+    val msg: String?
 )
 
 @JsonClass(generateAdapter = true)
@@ -51,6 +67,26 @@ data class SignUpData(
     val userphoneno: String?,
     @Json(name = "userseq")
     val userseq: Int?,
+)
+
+@JsonClass(generateAdapter = true)
+data class SignInData(
+    @Json(name = "userpass")
+    val userPassword: String?,
+    @Json(name = "regdate")
+    val registrationDate: String?,
+    @Json(name = "jobposition")
+    val jopPosition: String?,
+    @Json(name = "userid")
+    val userId: String?,
+    @Json(name = "userphoneno")
+    val userPhoneNo: String?,
+    @Json(name = "userseq")
+    val userSequence: Int?,
+    @Json(name = "upddate")
+    val updateDate: String?,
+    @Json(name = "status")
+    val userStatus: String?
 )
 
 
