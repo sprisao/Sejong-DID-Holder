@@ -1,6 +1,11 @@
 package com.example.did_holder_app.ui
 
-import androidx.compose.foundation.layout.*
+import android.content.Context
+import android.widget.Toast
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -12,10 +17,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.did_holder_app.data.api.RetrofitInstance
 import com.example.did_holder_app.data.api.RetrofitInstance.vcServerApi
 import com.example.did_holder_app.data.model.DIDDocument.DidDocument
-import com.example.did_holder_app.data.model.VC.*
+import com.example.did_holder_app.data.model.VC.SignInRequest
+import com.example.did_holder_app.data.model.VC.SignInResponse
+import com.example.did_holder_app.data.model.VC.VCRequest
+import com.example.did_holder_app.data.model.VC.VCResponse
 import com.example.did_holder_app.util.Constants
 import com.example.did_holder_app.util.DidDataStore
 import com.squareup.moshi.JsonAdapter
@@ -113,58 +120,19 @@ fun VCScreen(navController: NavController) {
 
             Button(onClick = {
                 val signInRequest = SignInRequest(userId, userPassword)
-                signInUser(signInRequest, dataStore, scope)
+                signInUser(signInRequest, dataStore, scope, context)
             }) {
                 Text(text = "로그인", style = MaterialTheme.typography.labelSmall)
             }
 
             Text(text = "또는", style = MaterialTheme.typography.labelSmall)
             Button(onClick = {
-                navController.navigate(Constants.SIGN_UP) {
-                }
+                navController.navigate(Constants.SIGN_UP) {}
             }) {
                 Text(text = "회원가입", style = MaterialTheme.typography.labelSmall)
             }
         }
     }
-    //        if (myVC.value?.data != null) {
-//            for (i in myVC.value!!.data!!.credentialSubject) {
-//                Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.Start) {
-//                    Text(text = "이름: ${i.name}", )
-//                    Text(text = "직급: ${i.position}")
-//                    Text(text = "부서: ${i.type}")
-//                }
-//                Button(
-//                    onClick = {
-//                              showVCString = !showVCString
-//                    },
-//                    modifier = Modifier.padding(16.dp)
-//                ) {
-//                    Text(text = "VC 보기")
-//                }
-//
-//                if(showVCString){
-//                    Text(
-//                        myVCString,
-//                        style = MaterialTheme.typography.bodySmall,
-//                    )
-//                }
-//                Button(
-//                    onClick = {
-//                        scope.launch {
-//                            dataStore.clearVc()
-//                        }
-//                    },
-//                    modifier = Modifier.padding(16.dp)
-//                ) {
-//                    Text(text = "VC 삭제 후 재발급")
-//                }
-//            }
-//        } else {
-//            Button(onClick = { scope.launch { getVC(dataStore, scope) } }) {
-//                Text(text = "사원증 발급 요청(VC)", style = MaterialTheme.typography.labelSmall)
-//            }
-//        }
 }
 
 fun getVC(dataStore: DidDataStore, scope: CoroutineScope, userSeq: Int, didDocument: DidDocument) {
@@ -195,19 +163,30 @@ fun getVC(dataStore: DidDataStore, scope: CoroutineScope, userSeq: Int, didDocum
     })
 }
 
-private fun signInUser(request: SignInRequest, dataStore: DidDataStore, scope: CoroutineScope) {
+private fun signInUser(
+    request: SignInRequest,
+    dataStore: DidDataStore,
+    scope: CoroutineScope,
+    context: Context
+) {
     val call = vcServerApi.login(request)
     call.enqueue(object : retrofit2.Callback<SignInResponse> {
         override fun onResponse(
-            call: Call<SignInResponse>,
-            response: Response<SignInResponse>
+            call: Call<SignInResponse>, response: Response<SignInResponse>
         ) {
             if (response.isSuccessful) {
                 Timber.d("Success")
                 Timber.d(response.body().toString())
                 /*get userseq from SignUpRequest */
-                val userseq = response.body()?.data?.userSequence
-                scope.launch { dataStore.saveUserseq(userseq!!) }
+                if (response.body()!!.code == 0) {
+                    val userseq = response.body()?.data?.userSequence
+                    scope.launch {
+                        dataStore.saveUserseq(userseq!!)
+                    }
+                } else if (response.body()!!.code != 0) {
+                    /*Show toast*/
+                    Toast.makeText(context, response.body()!!.msg, Toast.LENGTH_SHORT).show()
+                }
             } else {
                 println("Error")
             }
