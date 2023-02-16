@@ -93,8 +93,13 @@ fun VCScreen(navController: NavController) {
         } else if (myVCResponse.value?.data != null) {
             /*회원가입=true, VC발급=true*/
 
-            Button(onClick = {
 
+            /*show vc from diddatastore*/
+            Text(myVCResponse.value!!.toString(), style = MaterialTheme.typography.labelSmall)
+            Button(onClick = {
+                scope.launch {
+                    dataStore.clearVc()
+                }
             }) {
                 Text(text = "VC삭제", style = MaterialTheme.typography.labelSmall)
             }
