@@ -8,5 +8,5 @@ import retrofit2.http.POST
 
 interface BlockchainApi {
     @POST("/v1/holder")
-    fun saveDidDocument(@Body request: BlockChainRequest): Call<BlockchainResponse>
+    fun save(@Body request: BlockChainRequest): Call<BlockchainResponse>
 }

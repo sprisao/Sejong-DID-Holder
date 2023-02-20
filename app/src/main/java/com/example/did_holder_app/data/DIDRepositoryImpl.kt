@@ -1,8 +1,11 @@
 package com.example.did_holder_app.data
 
 import android.util.Base64
+import com.example.did_holder_app.data.api.RetrofitInstance.blockchainApi
 import com.example.did_holder_app.data.datastore.DidDataStore
 import com.example.did_holder_app.data.keystore.AndroidKeyStoreUtil
+import com.example.did_holder_app.data.model.Blockchain.BlockChainRequest
+import com.example.did_holder_app.data.model.Blockchain.BlockchainResponse
 import com.example.did_holder_app.data.model.DIDDocument.Authentication
 import com.example.did_holder_app.data.model.DIDDocument.DidDocument
 import com.example.did_holder_app.data.model.DIDDocument.PublicKey
@@ -12,11 +15,13 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import retrofit2.Call
+import retrofit2.Response
 import java.security.KeyPair
 import java.security.KeyPairGenerator
 import java.security.MessageDigest
 
-class DIDRepositoryImpl(private val dataStore : DidDataStore) : DIDRepository {
+class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
 
     val moshi: Moshi = Moshi.Builder()
         .add(KotlinJsonAdapterFactory())
@@ -79,13 +84,36 @@ class DIDRepositoryImpl(private val dataStore : DidDataStore) : DIDRepository {
             }
         }
     }
+    override suspend fun saveToBlockChain(
+        didDocument: DidDocument,
+    ) {
+        val call = blockchainApi.save(
+            BlockChainRequest(
+                didDocument.id,
+                jsonAdapter.toJson(didDocument)
+            )
+        )
+        call.enqueue(object : retrofit2.Callback<BlockchainResponse> {
+            override fun onResponse(
+                call: Call<BlockchainResponse>,
+                response: Response<BlockchainResponse>
+            ) {
+                if (response.isSuccessful) {
+                    println("Success")
+                } else {
+                    println("Error")
+                }
+            }
+
+            override fun onFailure(call: Call<BlockchainResponse>, t: Throwable) {
+                println("Error")
+            }
+        }
+        )
+    }
 
     private fun hashKey(key: ByteArray): ByteArray {
         return MessageDigest.getInstance("SHA-256").digest(key)
     }
-
-
-
-
 
 }
