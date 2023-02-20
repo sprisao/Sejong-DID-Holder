@@ -46,7 +46,7 @@ object RetrofitInstance {
 
     // Urls
     private const val VC_SERVER_URL = "https://14.63.215.106:8080"
-    private const val VC_HOLDER_URL = "http://14.63.215.106:8081"
+    private const val VC_HOLDER_URL = "https://14.63.215.106:8081"
     private const val RELAY_SERVER_URL = "https://14.63.215.106:8082"
     private const val BLOCKCHAIN_HOLDER_URL = "https://14.63.215.106:8081/v1/holder/"
 

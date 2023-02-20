@@ -15,13 +15,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.example.did_holder_app.data.api.RetrofitInstance
-import com.example.did_holder_app.data.model.Blockchain.BlockchainHolder
+import com.example.did_holder_app.data.api.RetrofitInstance.blockchainApi
+import com.example.did_holder_app.data.model.Blockchain.BlockChainRequest
+import com.example.did_holder_app.data.model.Blockchain.BlockchainResponse
 import com.example.did_holder_app.data.model.DIDDocument.DidDocument
 import com.example.did_holder_app.did.DidInit
 import com.example.did_holder_app.util.DidDataStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import timber.log.Timber
 
 @Composable
@@ -102,25 +106,49 @@ fun WithDidScreen(scope: CoroutineScope, dataStore: DidDataStore, didDocument: D
         ) {
             Text(text = "DID 삭제")
         }
-        Button(onClick = {
-            scope.launch {
-                val blockchainHolder =
-                    BlockchainHolder(didDocument.id, didDocument.toString())
-
-                val api = RetrofitInstance.blockchainApi
-                try {
-                    val response = api.postDidDocument(blockchainHolder)
-                    if (response.isSuccessful) {
-                        Timber.d("Saved to blockchain")
-                        Toast.makeText(context, "저장 성공", Toast.LENGTH_SHORT).show()
-                    } else {
-                        Timber.e(response.toString())
-                        Toast.makeText(context, "저장 실패", Toast.LENGTH_SHORT).show()
-                    }
-                } catch (e: Exception) {
-                    Toast.makeText(context, e.toString(), Toast.LENGTH_SHORT).show()
+        Button(
+            onClick = {
+                scope.launch {
+                    Timber.d(didDocument.toString())
                 }
-            }
+            },
+        ) {
+            Text(text = "Did Doc 생성")
+        }
+        Button(onClick = {
+            val call = blockchainApi.saveDidDocument(
+                BlockChainRequest(
+                    didDocument.id,
+                    didDocument.toString()
+                )
+            )
+
+            call.enqueue(object : Callback<BlockchainResponse> {
+                override fun onResponse(
+                    call: Call<BlockchainResponse>,
+                    response: Response<BlockchainResponse>
+                ) {
+                    if (response.isSuccessful) {
+                        if (response.body()?.code == 0) {
+                            Timber.d("블록체인에 저장 성공")
+                            Toast.makeText(context, "블록체인에 저장 성공", Toast.LENGTH_SHORT).show()
+                            Timber.d(response.body()?.msg.toString())
+                        } else {
+                            Timber.d("블록체인에 저장 실패")
+                            Timber.d(response.body()?.msg.toString())
+                            Toast.makeText(context, "실패 code: ${response.body()?.code} ${response.body()?.msg.toString()}", Toast.LENGTH_SHORT).show()
+                        }
+                    } else {
+                        Timber.d("블록체인에 저장 실패")
+                        Toast.makeText(context, "블록체인에 저장 실패", Toast.LENGTH_SHORT).show()
+                    }
+                }
+
+                override fun onFailure(call: Call<BlockchainResponse>, t: Throwable) {
+                    Timber.d("블록체인에 저장 실패")
+                    Toast.makeText(context, "실패: ${t.message.toString()}", Toast.LENGTH_SHORT).show()
+                }
+            })
         }) {
             Text(text = "블록체인에 저장")
         }
