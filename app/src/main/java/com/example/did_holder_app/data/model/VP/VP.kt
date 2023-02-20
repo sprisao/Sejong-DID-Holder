@@ -11,7 +11,7 @@ data class VP(
     @Json(name = "id")
     val id: String,
     @Json(name = "proof")
-    val proof: Proof,
+    val vpProof: VpProof,
     @Json(name = "type")
     val type: List<String>,
     @Json(name = "verifiableCredential")

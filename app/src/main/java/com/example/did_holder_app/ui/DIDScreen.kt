@@ -19,8 +19,8 @@ import com.example.did_holder_app.data.api.RetrofitInstance.blockchainApi
 import com.example.did_holder_app.data.model.Blockchain.BlockChainRequest
 import com.example.did_holder_app.data.model.Blockchain.BlockchainResponse
 import com.example.did_holder_app.data.model.DIDDocument.DidDocument
-import com.example.did_holder_app.did.DidInit
-import com.example.did_holder_app.util.DidDataStore
+import com.example.did_holder_app.data.did.DidInit
+import com.example.did_holder_app.data.datastore.DidDataStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import retrofit2.Call

@@ -1,12 +1,12 @@
-package com.example.did_holder_app.did
+package com.example.did_holder_app.data.did
 
 import android.util.Base64
 import com.example.did_holder_app.data.model.DIDDocument.Authentication
 import com.example.did_holder_app.data.model.DIDDocument.DidDocument
 import com.example.did_holder_app.data.model.DIDDocument.PublicKey
 import com.example.did_holder_app.data.model.DIDDocument.Service
-import com.example.did_holder_app.util.AndroidKeyStoreUtil
-import com.example.did_holder_app.util.DidDataStore
+import com.example.did_holder_app.data.keystore.AndroidKeyStoreUtil
+import com.example.did_holder_app.data.datastore.DidDataStore
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory

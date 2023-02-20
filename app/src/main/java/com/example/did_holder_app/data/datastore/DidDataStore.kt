@@ -1,4 +1,4 @@
-package com.example.did_holder_app.util
+package com.example.did_holder_app.data.datastore
 
 import android.content.Context
 import androidx.datastore.preferences.core.edit
@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.example.did_holder_app.data.model.DIDDocument.DidDocument
 import com.example.did_holder_app.data.model.VC.VCResponse
+import com.example.did_holder_app.util.Constants
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.flow.Flow

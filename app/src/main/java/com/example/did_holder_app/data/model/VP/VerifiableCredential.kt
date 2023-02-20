@@ -9,7 +9,7 @@ data class VerifiableCredential(
     @Json(name = "@context")
     val context: List<String>,
     @Json(name = "credentialSubject")
-    val credentialSubject: CredentialSubject,
+    val vpCredentialSubject: VpCredentialSubject,
     @Json(name = "expirationDate")
     val expirationDate: String,
     @Json(name = "id")
@@ -19,7 +19,7 @@ data class VerifiableCredential(
     @Json(name = "issuer")
     val issuer: String,
     @Json(name = "proof")
-    val proof: ProofX,
+    val vpProof: VpProof,
     @Json(name = "type")
     val type: List<String>
 )

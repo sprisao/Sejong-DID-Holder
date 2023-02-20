@@ -24,7 +24,7 @@ import com.example.did_holder_app.data.model.VC.SignInResponse
 import com.example.did_holder_app.data.model.VC.VCRequest
 import com.example.did_holder_app.data.model.VC.VCResponse
 import com.example.did_holder_app.util.Constants
-import com.example.did_holder_app.util.DidDataStore
+import com.example.did_holder_app.data.datastore.DidDataStore
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
@@ -58,7 +58,7 @@ fun VCScreen(navController: NavController) {
         verticalArrangement = Arrangement.Center
     ) {
         when {
-            (userSeq.value != 0 && userSeq.value != null) && myVCResponse.value?.data == null -> {
+            (userSeq.value != 0 && userSeq.value != null) && myVCResponse.value?.vcResponseData == null -> {
                 Button(onClick = {
                     scope.launch {
                         getVC(dataStore, scope, userSeq.value, myDidDocument.value, context)
@@ -74,7 +74,7 @@ fun VCScreen(navController: NavController) {
                     Text(text = "로그아웃", style = MaterialTheme.typography.labelSmall)
                 }
             }
-            myVCResponse.value?.data != null -> {
+            myVCResponse.value?.vcResponseData != null -> {
                 Text(myVCResponse.value.toString(), style = MaterialTheme.typography.labelSmall)
                 Button(onClick = {
                     scope.launch {

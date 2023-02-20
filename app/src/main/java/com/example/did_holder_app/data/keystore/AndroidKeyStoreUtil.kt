@@ -1,4 +1,4 @@
-package com.example.did_holder_app.util
+package com.example.did_holder_app.data.keystore
 
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties

@@ -9,11 +9,11 @@ data class VCResponse(
     @Json(name = "code")
     val code: Int?,
     @Json(name = "data")
-    val data: Data?,
+    val vcResponseData: VcResponseData?,
     @Json(name = "msg")
     val msg: String
 ) {
-    constructor() : this(0, Data(), "")
+    constructor() : this(0, VcResponseData(), "")
 }
 
 @JsonClass(generateAdapter = true)

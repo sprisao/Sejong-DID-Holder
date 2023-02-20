@@ -18,7 +18,7 @@ import androidx.navigation.NavController
 import com.example.did_holder_app.data.api.RetrofitInstance
 import com.example.did_holder_app.data.model.VC.SignUpRequest
 import com.example.did_holder_app.data.model.VC.SignUpResponse
-import com.example.did_holder_app.util.DidDataStore
+import com.example.did_holder_app.data.datastore.DidDataStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import retrofit2.Call

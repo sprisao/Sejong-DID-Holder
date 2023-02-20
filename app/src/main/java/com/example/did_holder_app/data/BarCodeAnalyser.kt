@@ -1,4 +1,4 @@
-package com.example.did_holder_app.util
+package com.example.did_holder_app.data
 
 import android.annotation.SuppressLint
 import androidx.camera.core.ImageAnalysis
