@@ -1,84 +1,91 @@
 package com.example.did_holder_app.data
 
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.emptyPreferences
-import androidx.datastore.preferences.core.stringPreferencesKey
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.map
+import android.util.Base64
+import com.example.did_holder_app.data.datastore.DidDataStore
+import com.example.did_holder_app.data.keystore.AndroidKeyStoreUtil
+import com.example.did_holder_app.data.model.DIDDocument.Authentication
+import com.example.did_holder_app.data.model.DIDDocument.DidDocument
+import com.example.did_holder_app.data.model.DIDDocument.PublicKey
+import com.example.did_holder_app.data.model.DIDDocument.Service
+import com.squareup.moshi.JsonAdapter
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import java.security.KeyPair
+import java.security.KeyPairGenerator
+import java.security.MessageDigest
 
-class DIDRepositoryImpl(private val dataStore: DataStore<Preferences>) : DIDRepository {
+class DIDRepositoryImpl(private val dataStore : DidDataStore) : DIDRepository {
 
-    private object PreferencesKeys {
-        val DID = stringPreferencesKey("did")
-        val PUBLIC_KEY = stringPreferencesKey("public_key")
+    val moshi: Moshi = Moshi.Builder()
+        .add(KotlinJsonAdapterFactory())
+        .build()
+
+    private val jsonAdapter: JsonAdapter<DidDocument> = moshi.adapter(DidDocument::class.java)
+
+    companion object {
+        private const val DID_METHOD = "sjbr"
+        private const val ALGORITHM = "SHA256withRSA"
     }
 
-    override suspend fun saveDID(did: String) {
-        dataStore.edit { preferences ->
-            preferences[PreferencesKeys.DID] = did
-        }
+    private val rsaKeyPair: KeyPair by lazy {
+        KeyPairGenerator.getInstance("RSA").apply {
+            initialize(2048)
+        }.generateKeyPair()
     }
 
-    override suspend fun getDID(): Flow<String> {
-        val preferences = dataStore.data
-        return preferences.catch { exception ->
-            if (exception is Exception) {
-                emit(emptyPreferences())
-            } else {
-                throw exception
+    override suspend fun generateDidDocument() {
+        val publicKey = rsaKeyPair.public
+        val privateKey = rsaKeyPair.private
+        val message = publicKey.toString().toByteArray()
+
+        val hashedPubKey = hashKey(message)
+        val encodedPubKey = Base64.encodeToString(hashedPubKey, Base64.NO_WRAP)
+
+        val didId = "did:$DID_METHOD:$encodedPubKey"
+
+        val didDocument = DidDocument(
+            context = "https://www.w3.org/ns/did/v1",
+            id = didId,
+            publicKey = listOf(
+                PublicKey(
+                    controller = didId,
+                    id = "$didId#keys-1",
+                    publicKeyBase64 = encodedPubKey,
+                    type = "RSAVerificationKey2023"
+                )
+            ),
+            authentication = listOf(
+                Authentication(
+                    type = "RSASignatureAuthentication2023",
+                    publicKey = "$didId#keys-1"
+                )
+            ),
+            service = listOf(
+                Service(
+                    id = "$didId;indx",
+                    type = "IndxService",
+                    serviceEndpoint = "https://example.com/indx"
+                )
+            )
+        )
+
+        coroutineScope {
+            launch {
+                val didDocumentJson = jsonAdapter.toJson(didDocument)
+                dataStore.saveDidDocument(didDocumentJson)
+                AndroidKeyStoreUtil.generateAndSaveKey(privateKey.toString())
             }
-        }.map { preferences ->
-            preferences[PreferencesKeys.DID] ?: ""
         }
     }
 
-    override suspend fun savePublicKey(publicKey: String) {
-        dataStore.edit { preferences ->
-            preferences[PreferencesKeys.PUBLIC_KEY] = publicKey
-        }
+    private fun hashKey(key: ByteArray): ByteArray {
+        return MessageDigest.getInstance("SHA-256").digest(key)
     }
 
-    override suspend fun getPublicKey(): Flow<String> {
-        return dataStore.data.catch { exception ->
-            if (exception is Exception) {
-                emit(emptyPreferences())
-            } else {
-                throw exception
-            }
-        }.map { preferences ->
-            preferences[PreferencesKeys.PUBLIC_KEY] ?: ""
-        }
-    }
+
+
+
 
 }
-
-
-//private object PreferencesKeys {
-//    val SORT_MODE = stringPreferencesKey("sort_mode")
-//}
-//
-//override suspend fun saveSortMode(mode: String) {
-//    dataStore.edit { preferences ->
-//        preferences[PreferencesKeys.SORT_MODE] = mode
-//    }
-//}
-//
-//override suspend fun getSortMode(): Flow<String> {
-//    return dataStore.data
-//        .catch { exception ->
-//            if (exception is IOException) {
-//                emit(emptyPreferences())
-//                exception.printStackTrace()
-//            } else {
-//                throw exception
-//            }
-//        }
-//        .map { preferences ->
-//            val sortMode = preferences[PreferencesKeys.SORT_MODE] ?: Sort.ACCURACY.value
-//            sortMode
-//        }
-//}
-//}

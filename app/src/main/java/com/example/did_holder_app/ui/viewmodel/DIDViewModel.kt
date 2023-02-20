@@ -3,28 +3,21 @@ package com.example.did_holder_app.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.did_holder_app.data.DIDRepository
+import com.example.did_holder_app.data.DIDRepositoryImpl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-class DIDViewModel(private val didRepository: DIDRepository) : ViewModel() {
+class DIDViewModel(private val didRepository: DIDRepositoryImpl) : ViewModel() {
 
-    fun saveDID(did: String) = viewModelScope.launch(Dispatchers.IO) {
-        Timber.d("saveDID: $did")
-        didRepository.saveDID(did)
-    }
+        fun generateDidDocument() = viewModelScope.launch(Dispatchers.IO) {
+            try {
+                didRepository.generateDidDocument()
+            } catch (e: Exception) {
+                Timber.e(e)
+            }
+        }
 
-    fun getDID() = viewModelScope.launch(Dispatchers.IO) {
-        didRepository.getDID()
-    }
-
-    fun savePublicKey(publicKey: String) = viewModelScope.launch(Dispatchers.IO) {
-        didRepository.savePublicKey(publicKey)
-    }
-
-    fun getPublicKey() = viewModelScope.launch(Dispatchers.IO) {
-        didRepository.getPublicKey()
-    }
 }
 
 

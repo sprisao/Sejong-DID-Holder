@@ -8,19 +8,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.example.did_holder_app.data.DIDRepositoryImpl
 import com.example.did_holder_app.data.api.RetrofitInstance.blockchainApi
 import com.example.did_holder_app.data.model.Blockchain.BlockChainRequest
 import com.example.did_holder_app.data.model.Blockchain.BlockchainResponse
 import com.example.did_holder_app.data.model.DIDDocument.DidDocument
-import com.example.did_holder_app.data.did.DidInit
 import com.example.did_holder_app.data.datastore.DidDataStore
+import com.example.did_holder_app.ui.viewmodel.DIDViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import retrofit2.Call
@@ -30,9 +29,12 @@ import timber.log.Timber
 
 @Composable
 fun DIDScreen() {
+
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
     val dataStore = DidDataStore(context)
+    val viewModel = remember { DIDViewModel(DIDRepositoryImpl(dataStore))}
+
+    val scope = rememberCoroutineScope()
     val myDidDocument = dataStore.didDocumentFlow.collectAsState(initial = DidDocument())
 
     val state = if (myDidDocument.value?.id != null) {
@@ -41,13 +43,13 @@ fun DIDScreen() {
         DIDState.None
     }
 
-    DIDScreenState(scope, dataStore, state)
+    DIDScreenState(viewModel, scope, dataStore, state)
 }
 
 @Composable
-fun DIDScreenState(scope: CoroutineScope, dataStore: DidDataStore, state: DIDState) {
+fun DIDScreenState(viewModel: DIDViewModel, scope: CoroutineScope, dataStore: DidDataStore, state: DIDState) {
     when (state) {
-        is DIDState.None -> EmptyDidScreen(scope, dataStore)
+        is DIDState.None -> EmptyDidScreen(viewModel, scope, dataStore)
         is DIDState.Existing -> WithDidScreen(scope, dataStore, state.didDocument)
     }
 }
@@ -58,8 +60,8 @@ sealed class DIDState {
 }
 
 @Composable
-fun EmptyDidScreen(scope: CoroutineScope, dataStore: DidDataStore) {
-    val didInit = DidInit(dataStore)
+fun EmptyDidScreen(viewModel: DIDViewModel, scope: CoroutineScope, dataStore: DidDataStore) {
+//    val didInit = DidInit(dataStore)
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -69,9 +71,10 @@ fun EmptyDidScreen(scope: CoroutineScope, dataStore: DidDataStore) {
     ) {
         Button(
             onClick = {
-                scope.launch {
-                    didInit.generateDidDocument()
-                }
+//                scope.launch {
+//                    didInit.generateDidDocument()
+//                }
+                viewModel.generateDidDocument()
             },
             modifier = Modifier.padding(16.dp)
         ) {
