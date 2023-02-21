@@ -135,8 +135,9 @@ fun getVC(
         override fun onResponse(call: Call<VCResponse>, response: Response<VCResponse>) {
             if (response.isSuccessful) {
                 if (response.body()!!.code == 0) {
-                    val vcJson = jsonAdapter.toJson(response.body())
-                    scope.launch { dataStore.saveVc(vcJson) }
+//                    val vcJson = jsonAdapter.toJson(response.body().vcResponseData.)
+                    val vc = response.body()!!.vcResponseData.toString()
+                    scope.launch { dataStore.saveVc(vc) }
                     Timber.d(response.body().toString())
                     Timber.d("VC발급 성공")
                 } else {
