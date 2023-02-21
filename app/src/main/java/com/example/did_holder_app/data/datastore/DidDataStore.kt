@@ -35,7 +35,6 @@ class DidDataStore(context: Context) {
 
 
     // Did Document Flow
-
     val didDocumentFlow: Flow<DidDocument?> = dataStore.data.map {
         val didDocumentString = it[Key.DID_DOCUMENT]
         if (didDocumentString != null) {
@@ -43,6 +42,20 @@ class DidDataStore(context: Context) {
         } else {
             null
         }
+    }
+
+    // VC Flow
+    val vcFlow: Flow<VcResponse?> = context.dataStore.data.map {
+        val vcString = it[Key.VC]
+        if (vcString != null) {
+            vcResponseAdapter.fromJson(vcString)
+        } else {
+            null
+        }
+    }
+
+    val userSeqFlow: Flow<Int?> = context.dataStore.data.map {
+        it[Key.USERSEQ]?.toInt()
     }
 
     suspend fun saveDidDocument(didDocument: String) {
@@ -57,19 +70,6 @@ class DidDataStore(context: Context) {
         }
     }
 
-
-    // VC Flow
-
-    val vcFlow: Flow<VcResponse?> = context.dataStore.data.map {
-        val vcString = it[Key.VC]
-        if (vcString != null) {
-            vcResponseAdapter.fromJson(vcString)
-        } else {
-            null
-        }
-    }
-
-
     suspend fun saveVc(vc: String) {
         dataStore.edit {
             it[Key.VC] = vc
@@ -82,18 +82,13 @@ class DidDataStore(context: Context) {
         }
     }
 
-
-    val userseqFlow: Flow<Int?> = context.dataStore.data.map {
-        it[Key.USERSEQ]?.toInt()
-    }
-
-    suspend fun saveUserseq(userseq: Int) {
+    suspend fun saveUserSeq(userSeq: Int) {
         dataStore.edit {
-            it[Key.USERSEQ] = userseq.toString()
+            it[Key.USERSEQ] = userSeq.toString()
         }
     }
 
-    suspend fun clearUserseq() {
+    suspend fun clearUserSeq() {
         dataStore.edit {
             it.remove(Key.USERSEQ)
         }

@@ -115,7 +115,7 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
             if (response.isSuccessful) {
                 if (response.body()?.code == 0) {
                     // DataStore에 userseq 저장
-                    response.body()?.data?.userseq?.let { dataStore.saveUserseq(it) }
+                    response.body()?.data?.userseq?.let { dataStore.saveUserSeq(it) }
                 }
                 result(response)
             } else {
@@ -159,7 +159,7 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
                     // DataStore에 userseq 저장
                     response.body()?.data?.userSequence.let {
                         if (it != null) {
-                            dataStore.saveUserseq(it)
+                            dataStore.saveUserSeq(it)
                         }
                     }
                 }

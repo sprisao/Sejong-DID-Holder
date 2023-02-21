@@ -20,7 +20,7 @@ class DIDViewModel(
     ViewModel() {
     val didDocument: Flow<DidDocument?> = dataStore.didDocumentFlow
     val vc: Flow<VcResponse?> = dataStore.vcFlow
-    val userSeq: Flow<Int?> = dataStore.userseqFlow
+    val userSeq: Flow<Int?> = dataStore.userSeqFlow
 
     // DID Document 생성
     fun generateDidDocument() = viewModelScope.launch(Dispatchers.IO) {
@@ -71,7 +71,7 @@ class DIDViewModel(
     // Delete UserSeq 로그아웃
     fun clearUserSeq() {
         viewModelScope.launch {
-            dataStore.clearUserseq()
+            dataStore.clearUserSeq()
         }
     }
 
