@@ -5,16 +5,14 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
-data class VCResponse(
+data class VcResponse(
     @Json(name = "code")
     val code: Int?,
     @Json(name = "data")
     val vcResponseData: VcResponseData?,
     @Json(name = "msg")
     val msg: String
-) {
-    constructor() : this(0, VcResponseData(), "")
-}
+)
 
 @JsonClass(generateAdapter = true)
 data class SignInRequest(

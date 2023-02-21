@@ -1,6 +1,5 @@
 package com.example.did_holder_app.ui
 
-import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -17,39 +16,24 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.did_holder_app.data.api.RetrofitInstance.vcServerApi
 import com.example.did_holder_app.data.model.DIDDocument.DidDocument
 import com.example.did_holder_app.data.model.VC.SignInRequest
-import com.example.did_holder_app.data.model.VC.SignInResponse
 import com.example.did_holder_app.data.model.VC.VCRequest
-import com.example.did_holder_app.data.model.VC.VCResponse
-import com.example.did_holder_app.util.Constants
-import com.example.did_holder_app.data.datastore.DidDataStore
+import com.example.did_holder_app.data.model.VC.VcResponseData
 import com.example.did_holder_app.ui.viewmodel.DIDViewModel
-import com.squareup.moshi.JsonAdapter
-import com.squareup.moshi.Moshi
-import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
-import kotlinx.coroutines.CoroutineScope
+import com.example.did_holder_app.util.Constants
 import kotlinx.coroutines.launch
-import retrofit2.Call
-import retrofit2.Response
-import timber.log.Timber
-
-val jsonAdapter: JsonAdapter<VCResponse> = Moshi.Builder()
-    .add(KotlinJsonAdapterFactory())
-    .build()
-    .adapter(VCResponse::class.java)
 
 @Composable
 fun VCScreen(navController: NavController, viewModel: DIDViewModel) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    val dataStore = DidDataStore(context)
-    val myVCResponse = dataStore.vcResponseFlow.collectAsState(initial = VCResponse())
+    val savedVC = viewModel.vc.collectAsState(initial = VcResponseData())
+    val savedDidDocument = viewModel.didDocument.collectAsState(initial = DidDocument())
+    val savedUserSeq = viewModel.userSeq.collectAsState(initial = 0)
 
-    val myDidDocument = dataStore.didDocumentFlow.collectAsState(initial = DidDocument())
-    val userSeq = dataStore.userseqFlow.collectAsState(0)
+
 
     Column(
         modifier = Modifier
@@ -59,27 +43,46 @@ fun VCScreen(navController: NavController, viewModel: DIDViewModel) {
         verticalArrangement = Arrangement.Center
     ) {
         when {
-            (userSeq.value != 0 && userSeq.value != null) && myVCResponse.value?.vcResponseData == null -> {
+            (savedUserSeq.value != 0 && savedUserSeq.value != null) && savedVC.value == null -> {
                 Button(onClick = {
-                    scope.launch {
-                        getVC(dataStore, scope, userSeq.value, myDidDocument.value, context)
+                    viewModel.requestVC(
+                        VCRequest(
+                            savedUserSeq.value!!,
+                            savedDidDocument.value?.id!!
+                        )
+                    ) {
+                        if (it.isSuccessful) {
+                            if (it.body()?.code == 0) {
+                                Toast.makeText(context, "회원가입 완료", Toast.LENGTH_SHORT).show()
+                                navController.popBackStack()
+                            } else {
+                                Toast.makeText(
+                                    context,
+                                    "실패 : ${it.body()?.msg}",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        } else {
+                            Toast.makeText(context, "실패 : ${it.message()}", Toast.LENGTH_SHORT)
+                                .show()
+                        }
                     }
                 }) {
                     Text(text = "VC생성", style = MaterialTheme.typography.labelSmall)
                 }
                 Button(onClick = {
                     scope.launch {
-                        dataStore.clearUserseq()
+                        viewModel.clearUserSeq()
                     }
                 }) {
                     Text(text = "로그아웃", style = MaterialTheme.typography.labelSmall)
                 }
             }
-            myVCResponse.value?.vcResponseData != null -> {
-                Text(myVCResponse.value.toString(), style = MaterialTheme.typography.labelSmall)
+            savedVC.value != null -> {
+                Text(savedVC.value.toString(), style = MaterialTheme.typography.labelSmall)
                 Button(onClick = {
                     scope.launch {
-                        dataStore.clearVc()
+                        viewModel.clearVc()
                     }
                 }) {
                     Text(text = "VC삭제", style = MaterialTheme.typography.labelSmall)
@@ -103,7 +106,22 @@ fun VCScreen(navController: NavController, viewModel: DIDViewModel) {
                 )
                 Button(onClick = {
                     val signInRequest = SignInRequest(userId, userPassword)
-                    signInUser(signInRequest, dataStore, scope, context)
+                    viewModel.signInUser(signInRequest) {
+                        if (it.isSuccessful) {
+                            if (it.body()?.code == 0) {
+                                Toast.makeText(context, "로그인 성공", Toast.LENGTH_SHORT).show()
+                            } else {
+                                Toast.makeText(
+                                    context,
+                                    "실패 : ${it.body()?.msg}",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        } else {
+                            Toast.makeText(context, "실패 : ${it.message()}", Toast.LENGTH_SHORT)
+                                .show()
+                        }
+                    }
                 }) {
                     Text(text = "로그인", style = MaterialTheme.typography.labelSmall)
                 }
@@ -116,88 +134,4 @@ fun VCScreen(navController: NavController, viewModel: DIDViewModel) {
             }
         }
     }
-}
-
-fun getVC(
-    dataStore: DidDataStore,
-    scope: CoroutineScope,
-    userSeq: Int?,
-    didDocument: DidDocument?,
-    context: Context
-) {
-    val vcRequest = VCRequest(
-        userseq = userSeq,
-        holderdid = didDocument?.id,
-    )
-
-    val call = vcRequest.let { vcServerApi.getVC(it) }
-    call.enqueue(object : retrofit2.Callback<VCResponse> {
-        override fun onResponse(call: Call<VCResponse>, response: Response<VCResponse>) {
-            if (response.isSuccessful) {
-                if (response.body()!!.code == 0) {
-//                    val vcJson = jsonAdapter.toJson(response.body().vcResponseData.)
-                    val vc = response.body()!!.vcResponseData.toString()
-                    scope.launch { dataStore.saveVc(vc) }
-                    Timber.d(response.body().toString())
-                    Timber.d("VC발급 성공")
-                } else {
-                    Timber.d(response.body().toString())
-                    Toast.makeText(
-                        context,
-                        "${response.body()!!.code}: ${response.body()!!.msg}",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            } else {
-                Toast.makeText(
-                    context,
-                    response.errorBody().toString(),
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
-        }
-
-        override fun onFailure(call: Call<VCResponse>, t: Throwable) {
-            Toast.makeText(
-                context,
-                t.message,
-                Toast.LENGTH_SHORT
-            ).show()
-        }
-    })
-}
-
-private fun signInUser(
-    request: SignInRequest,
-    dataStore: DidDataStore,
-    scope: CoroutineScope,
-    context: Context
-) {
-    val call = vcServerApi.login(request)
-    call.enqueue(object : retrofit2.Callback<SignInResponse> {
-        override fun onResponse(
-            call: Call<SignInResponse>, response: Response<SignInResponse>
-        ) {
-            if (response.isSuccessful) {
-                if (response.body()?.code == 0) {
-                    val userseq = response.body()?.data?.userSequence
-                    scope.launch {
-                        dataStore.saveUserseq(userseq!!)
-                    }
-                } else {
-                    Toast.makeText(
-                        context,
-                        "${response.body()?.code}: ${response.body()!!.msg}",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            } else {
-                Toast.makeText(context, "로그인 실패 : 응답 요청 실패", Toast.LENGTH_SHORT).show()
-            }
-        }
-
-        override fun onFailure(call: Call<SignInResponse>, t: Throwable) {
-            Toast.makeText(context, t.message, Toast.LENGTH_SHORT).show()
-        }
-    })
 }

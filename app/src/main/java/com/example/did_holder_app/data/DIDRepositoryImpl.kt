@@ -11,8 +11,7 @@ import com.example.did_holder_app.data.model.DIDDocument.Authentication
 import com.example.did_holder_app.data.model.DIDDocument.DidDocument
 import com.example.did_holder_app.data.model.DIDDocument.PublicKey
 import com.example.did_holder_app.data.model.DIDDocument.Service
-import com.example.did_holder_app.data.model.VC.SignUpRequest
-import com.example.did_holder_app.data.model.VC.SignUpResponse
+import com.example.did_holder_app.data.model.VC.*
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
@@ -116,11 +115,52 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
         result: (Response<SignUpResponse>) -> Unit
     ) {
         try {
-            val call = vcServerApi.createUser(request)
+            val call = vcServerApi.signUp(request)
             val response = call.awaitResponse()
             if (response.isSuccessful) {
-                if(response.body()?.code ==0){
+                if (response.body()?.code == 0) {
                     response.body()?.data?.userseq?.let { dataStore.saveUserseq(it) }
+                }
+                result(response)
+            } else {
+                result(response)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    override suspend fun requestVC(request: VCRequest, result: (Response<VcResponse>) -> Unit) {
+        try {
+            val call = vcServerApi.requestVC(request)
+            val response = call.awaitResponse()
+            if (response.isSuccessful) {
+                if (response.body()?.code == 0) {
+                    response.body()?.vcResponseData.let { dataStore.saveVc(it.toString()) }
+                }
+                result(response)
+            } else {
+                result(response)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    override suspend fun signInUser(
+        request: SignInRequest,
+        result: (Response<SignInResponse>) -> Unit
+    ) {
+        try {
+            val call = vcServerApi.signIn(request)
+            val response = call.awaitResponse()
+            if (response.isSuccessful) {
+                if (response.body()?.code == 0) {
+                    response.body()?.data?.userSequence.let {
+                        if (it != null) {
+                            dataStore.saveUserseq(it)
+                        }
+                    }
                 }
                 result(response)
             } else {

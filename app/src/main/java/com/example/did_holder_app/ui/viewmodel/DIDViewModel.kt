@@ -1,12 +1,12 @@
 package com.example.did_holder_app.ui.viewmodel
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.did_holder_app.data.DIDRepositoryImpl
 import com.example.did_holder_app.data.datastore.DidDataStore
 import com.example.did_holder_app.data.model.Blockchain.BlockchainResponse
 import com.example.did_holder_app.data.model.DIDDocument.DidDocument
-import com.example.did_holder_app.data.model.VC.SignUpRequest
-import com.example.did_holder_app.data.model.VC.SignUpResponse
+import com.example.did_holder_app.data.model.VC.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
@@ -19,6 +19,8 @@ class DIDViewModel(
 ) :
     ViewModel() {
     val didDocument: Flow<DidDocument?> = dataStore.didDocumentFlow
+    val vc: Flow<VcResponse?> = dataStore.vcFlow
+    val userSeq: Flow<Int?> = dataStore.userseqFlow
 
     // DID Document 생성
     fun generateDidDocument() = viewModelScope.launch(Dispatchers.IO) {
@@ -55,6 +57,40 @@ class DIDViewModel(
             didRepository.signUpUser(request, result)
         }
     }
+
+    // SignIn 로그임
+
+    fun signInUser(
+        request: SignInRequest,
+        result: (Response<SignInResponse>) -> Unit,
+    ) {
+        viewModelScope.launch {
+            didRepository.signInUser(request, result)
+        }
+    }
+
+    // Delete UserSeq 로그아웃
+    fun clearUserSeq() {
+        viewModelScope.launch {
+            dataStore.clearUserseq()
+        }
+    }
+    // VC 발급 요청
+    fun requestVC(request: VCRequest, result: (Response<VcResponse>) -> Unit) {
+        viewModelScope.launch {
+            didRepository.requestVC(request, result)
+        }
+    }
+
+
+    // VC삭제
+    fun clearVc() {
+        viewModelScope.launch {
+            dataStore.clearVc()
+        }
+    }
+
+
 
 }
 
