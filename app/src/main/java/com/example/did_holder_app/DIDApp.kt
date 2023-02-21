@@ -1,5 +1,6 @@
 package com.example.did_holder_app
 
+import android.content.Context
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -9,9 +10,11 @@ import androidx.compose.material.Text
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
@@ -20,10 +23,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.did_holder_app.data.DIDRepositoryImpl
+import com.example.did_holder_app.data.datastore.DidDataStore
 import com.example.did_holder_app.ui.DIDScreen
 import com.example.did_holder_app.ui.QRResultScreen
 import com.example.did_holder_app.ui.QRScreen
 import com.example.did_holder_app.ui.VCScreen
+import com.example.did_holder_app.ui.viewmodel.DIDViewModel
 import com.example.did_holder_app.ui.viewmodel.SignUpScreen
 import com.example.did_holder_app.util.Constants
 
@@ -57,21 +63,25 @@ fun DIDTopBar() {
 
 @Composable
 fun DidApp() {
+    val context = LocalContext.current
+    val dataStore = DidDataStore(context)
+    val viewModel = remember { DIDViewModel(DIDRepositoryImpl(dataStore)) }
+
     val navController = rememberNavController()
     // add top appbar with title "Holder"
     Scaffold(
         bottomBar = { DIDBottomNav(navController = navController) },
         topBar = { DIDTopBar() }) {
         Box(Modifier.padding(it))
-        NavigationGraph(navController = navController)
+        NavigationGraph(navController = navController, viewModel = viewModel, context = context, dataStore = dataStore)
     }
 }
 
 @Composable
-fun NavigationGraph(navController: NavHostController) {
+fun NavigationGraph(navController: NavHostController, viewModel: DIDViewModel, context: Context, dataStore: DidDataStore){
     NavHost(navController = navController, startDestination = Constants.DID) {
         composable(Constants.DID) {
-            DIDScreen()
+            DIDScreen(viewModel,context,dataStore)
         }
         composable(Constants.VC) {
             VCScreen(navController)

@@ -1,5 +1,6 @@
 package com.example.did_holder_app.ui
 
+import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,7 +13,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.example.did_holder_app.data.DIDRepositoryImpl
 import com.example.did_holder_app.data.model.DIDDocument.DidDocument
 import com.example.did_holder_app.data.datastore.DidDataStore
 import com.example.did_holder_app.ui.viewmodel.DIDViewModel
@@ -21,11 +21,9 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @Composable
-fun DIDScreen() {
+fun DIDScreen(viewModel: DIDViewModel, context: Context, dataStore: DidDataStore) {
 
-    val context = LocalContext.current
-    val dataStore = DidDataStore(context)
-    val viewModel = remember { DIDViewModel(DIDRepositoryImpl(dataStore)) }
+//    val viewModel = remember { DIDViewModel(DIDRepositoryImpl(dataStore), context) }
 
     val scope = rememberCoroutineScope()
     val myDidDocument = dataStore.didDocumentFlow.collectAsState(initial = DidDocument())
@@ -34,6 +32,12 @@ fun DIDScreen() {
         DIDState.Existing(didDocument = myDidDocument.value!!)
     } else {
         DIDState.None
+    }
+
+    LaunchedEffect(viewModel){
+        viewModel.saveDidDocumentToBlockchain(
+            myDidDocument.value!!
+        )
     }
 
     DIDScreenState(viewModel, scope, dataStore, state)
@@ -117,7 +121,7 @@ fun WithDidScreen(viewModel:DIDViewModel, scope: CoroutineScope, dataStore: DidD
             Text(text = "Did Doc 생성")
         }
         Button(onClick = {
-            viewModel.saveToBlockChain(didDocument)
+            viewModel.saveDidDocumentToBlockchain(didDocument)
         }) {
             Text(text = "블록체인에 저장")
         }

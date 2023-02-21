@@ -8,22 +8,30 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-class DIDViewModel(private val didRepository: DIDRepositoryImpl) : ViewModel() {
+class DIDViewModel(private val didRepository: DIDRepositoryImpl,) : ViewModel() {
 
-        fun generateDidDocument() = viewModelScope.launch(Dispatchers.IO) {
-            try {
-                didRepository.generateDidDocument()
-            } catch (e: Exception) {
-                Timber.e(e)
-            }
+    fun generateDidDocument() = viewModelScope.launch(Dispatchers.IO) {
+        try {
+            didRepository.generateDidDocument()
+        } catch (e: Exception) {
+            Timber.e(e)
         }
-    fun saveToBlockChain(didDocument: DidDocument) {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                didRepository.saveToBlockChain(didDocument)
-            } catch (e: Exception) {
-                Timber.e(e)
-            }
+    }
+
+    fun saveDidDocumentToBlockchain(
+        didDocument: DidDocument
+    ) {
+        viewModelScope.launch {
+            didRepository.saveToBlockChain(didDocument, object : DIDRepositoryImpl.SaveToBlockChainCallback {
+                override fun onSuccess() {
+                    // Handle success
+                    Timber.d("Success")
+                }
+                override fun onError(error: String) {
+                    // Handle error
+                    Timber.d("Error: $error")
+                }
+            })
         }
     }
 

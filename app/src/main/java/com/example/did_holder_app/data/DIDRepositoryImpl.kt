@@ -17,6 +17,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import retrofit2.Call
 import retrofit2.Response
+import retrofit2.awaitResponse
 import java.security.KeyPair
 import java.security.KeyPairGenerator
 import java.security.MessageDigest
@@ -84,32 +85,32 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
             }
         }
     }
+
+    interface SaveToBlockChainCallback {
+        fun onSuccess()
+        fun onError(error: String)
+    }
+
     override suspend fun saveToBlockChain(
         didDocument: DidDocument,
+        callback: SaveToBlockChainCallback
     ) {
-        val call = blockchainApi.save(
-            BlockChainRequest(
-                didDocument.id,
-                jsonAdapter.toJson(didDocument)
+         try {
+            val call = blockchainApi.save(
+                BlockChainRequest(
+                    didDocument.id,
+                    didDocument.toString()
+                )
             )
-        )
-        call.enqueue(object : retrofit2.Callback<BlockchainResponse> {
-            override fun onResponse(
-                call: Call<BlockchainResponse>,
-                response: Response<BlockchainResponse>
-            ) {
-                if (response.isSuccessful) {
-                    println("Success")
-                } else {
-                    println("Error")
-                }
+            val response = call.awaitResponse()
+            if (response.isSuccessful) {
+                callback.onSuccess()
+            } else {
+                callback.onError(response.errorBody().toString())
             }
-
-            override fun onFailure(call: Call<BlockchainResponse>, t: Throwable) {
-                println("Error")
-            }
+        } catch (e: Exception) {
+            callback.onError(e.message.toString())
         }
-        )
     }
 
     private fun hashKey(key: ByteArray): ByteArray {
