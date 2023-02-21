@@ -1,6 +1,5 @@
 package com.example.did_holder_app
 
-import android.content.Context
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -73,15 +72,19 @@ fun DidApp() {
         bottomBar = { DIDBottomNav(navController = navController) },
         topBar = { DIDTopBar() }) {
         Box(Modifier.padding(it))
-        NavigationGraph(navController = navController, viewModel = viewModel, context = context, dataStore = dataStore)
+        NavigationGraph(navController = navController, viewModel = viewModel, dataStore = dataStore)
     }
 }
 
 @Composable
-fun NavigationGraph(navController: NavHostController, viewModel: DIDViewModel, context: Context, dataStore: DidDataStore){
+fun NavigationGraph(
+    navController: NavHostController,
+    viewModel: DIDViewModel,
+    dataStore: DidDataStore
+) {
     NavHost(navController = navController, startDestination = Constants.DID) {
         composable(Constants.DID) {
-            DIDScreen(viewModel,context,dataStore)
+            DIDScreen(viewModel, dataStore)
         }
         composable(Constants.VC) {
             VCScreen(navController)

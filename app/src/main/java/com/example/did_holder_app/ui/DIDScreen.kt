@@ -1,6 +1,5 @@
 package com.example.did_holder_app.ui
 
-import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -22,9 +21,7 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @Composable
-fun DIDScreen(viewModel: DIDViewModel, context: Context, dataStore: DidDataStore) {
-
-
+fun DIDScreen(viewModel: DIDViewModel, dataStore: DidDataStore) {
     val scope = rememberCoroutineScope()
     val myDidDocument = dataStore.didDocumentFlow.collectAsState(initial = DidDocument())
 
@@ -45,7 +42,7 @@ fun DIDScreenState(
     state: DIDState
 ) {
     when (state) {
-        is DIDState.None -> EmptyDidScreen(viewModel, scope, dataStore)
+        is DIDState.None -> EmptyDidScreen(viewModel)
         is DIDState.Existing -> WithDidScreen(viewModel, scope, dataStore, state.didDocument)
     }
 }
@@ -56,8 +53,7 @@ sealed class DIDState {
 }
 
 @Composable
-fun EmptyDidScreen(viewModel: DIDViewModel, scope: CoroutineScope, dataStore: DidDataStore) {
-//    val didInit = DidInit(dataStore)
+fun EmptyDidScreen(viewModel: DIDViewModel) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -67,9 +63,6 @@ fun EmptyDidScreen(viewModel: DIDViewModel, scope: CoroutineScope, dataStore: Di
     ) {
         Button(
             onClick = {
-//                scope.launch {
-//                    didInit.generateDidDocument()
-//                }
                 viewModel.generateDidDocument()
             },
             modifier = Modifier.padding(16.dp)
