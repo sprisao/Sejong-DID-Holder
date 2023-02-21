@@ -2,7 +2,7 @@ package com.example.did_holder_app.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.did_holder_app.data.DIDRepositoryImpl
+import com.example.did_holder_app.data.repository.DIDRepositoryImpl
 import com.example.did_holder_app.data.datastore.DidDataStore
 import com.example.did_holder_app.data.model.Blockchain.BlockchainResponse
 import com.example.did_holder_app.data.model.DIDDocument.DidDocument

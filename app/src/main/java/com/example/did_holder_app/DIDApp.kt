@@ -22,7 +22,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.did_holder_app.data.DIDRepositoryImpl
+import com.example.did_holder_app.data.repository.DIDRepositoryImpl
 import com.example.did_holder_app.data.datastore.DidDataStore
 import com.example.did_holder_app.ui.DIDScreen
 import com.example.did_holder_app.ui.QRResultScreen

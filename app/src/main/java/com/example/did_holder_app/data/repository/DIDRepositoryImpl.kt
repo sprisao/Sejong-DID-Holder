@@ -1,4 +1,4 @@
-package com.example.did_holder_app.data
+package com.example.did_holder_app.data.repository
 
 import android.util.Base64
 import com.example.did_holder_app.data.api.RetrofitInstance.blockchainApi

@@ -1,4 +1,4 @@
-package com.example.did_holder_app.data
+package com.example.did_holder_app.data.repository
 
 import com.example.did_holder_app.data.model.Blockchain.BlockchainResponse
 import com.example.did_holder_app.data.model.DIDDocument.DidDocument
