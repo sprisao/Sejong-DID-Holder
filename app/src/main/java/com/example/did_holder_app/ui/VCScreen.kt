@@ -25,6 +25,7 @@ import com.example.did_holder_app.data.model.VC.VCRequest
 import com.example.did_holder_app.data.model.VC.VCResponse
 import com.example.did_holder_app.util.Constants
 import com.example.did_holder_app.data.datastore.DidDataStore
+import com.example.did_holder_app.ui.viewmodel.DIDViewModel
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
@@ -40,7 +41,7 @@ val jsonAdapter: JsonAdapter<VCResponse> = Moshi.Builder()
     .adapter(VCResponse::class.java)
 
 @Composable
-fun VCScreen(navController: NavController) {
+fun VCScreen(navController: NavController, viewModel: DIDViewModel) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 

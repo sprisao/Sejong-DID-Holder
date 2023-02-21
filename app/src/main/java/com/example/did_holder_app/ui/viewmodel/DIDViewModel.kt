@@ -1,11 +1,12 @@
 package com.example.did_holder_app.ui.viewmodel
-
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.did_holder_app.data.DIDRepositoryImpl
 import com.example.did_holder_app.data.datastore.DidDataStore
 import com.example.did_holder_app.data.model.Blockchain.BlockchainResponse
 import com.example.did_holder_app.data.model.DIDDocument.DidDocument
+import com.example.did_holder_app.data.model.VC.SignUpRequest
+import com.example.did_holder_app.data.model.VC.SignUpResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
@@ -42,6 +43,16 @@ class DIDViewModel(
     fun clearDidDocument() {
         viewModelScope.launch {
             dataStore.clearDidDocument()
+        }
+    }
+
+    // SignUp 회원가입
+    fun signUpUser(
+        request: SignUpRequest,
+        result: (Response<SignUpResponse>) -> Unit,
+    ) {
+        viewModelScope.launch {
+            didRepository.signUpUser(request, result)
         }
     }
 

@@ -86,13 +86,13 @@ fun NavigationGraph(
             DIDScreen(viewModel)
         }
         composable(Constants.VC) {
-            VCScreen(navController)
+            VCScreen(navController, viewModel)
         }
         composable(Constants.QR) {
             QRScreen(navController)
         }
         composable(Constants.SIGN_UP) {
-            SignUpScreen(navController)
+            SignUpScreen(navController, viewModel)
         }
         composable("${Constants.QR_RESULT}/{qrResult}") {
             val qrResult = it.arguments?.getString("qrResult")
@@ -107,7 +107,7 @@ fun NavigationGraph(
 @Composable
 fun DIDBottomNav(navController: NavController) {
     val items =
-        listOf<BottomNavItem>(BottomNavItem.DID, BottomNavItem.VC, BottomNavItem.QR)
+        listOf(BottomNavItem.DID, BottomNavItem.VC, BottomNavItem.QR)
 
     NavigationBar(
         modifier = Modifier.fillMaxWidth(),

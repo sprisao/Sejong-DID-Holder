@@ -2,6 +2,7 @@ package com.example.did_holder_app.data
 
 import android.util.Base64
 import com.example.did_holder_app.data.api.RetrofitInstance.blockchainApi
+import com.example.did_holder_app.data.api.RetrofitInstance.vcServerApi
 import com.example.did_holder_app.data.datastore.DidDataStore
 import com.example.did_holder_app.data.keystore.AndroidKeyStoreUtil
 import com.example.did_holder_app.data.model.Blockchain.BlockChainRequest
@@ -10,12 +11,13 @@ import com.example.did_holder_app.data.model.DIDDocument.Authentication
 import com.example.did_holder_app.data.model.DIDDocument.DidDocument
 import com.example.did_holder_app.data.model.DIDDocument.PublicKey
 import com.example.did_holder_app.data.model.DIDDocument.Service
+import com.example.did_holder_app.data.model.VC.SignUpRequest
+import com.example.did_holder_app.data.model.VC.SignUpResponse
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import retrofit2.Call
 import retrofit2.Response
 import retrofit2.awaitResponse
 import java.security.KeyPair
@@ -32,7 +34,7 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
 
     companion object {
         private const val DID_METHOD = "sjbr"
-        private const val ALGORITHM = "SHA256withRSA"
+//        private const val ALGORITHM = "SHA256withRSA"
     }
 
     private val rsaKeyPair: KeyPair by lazy {
@@ -108,6 +110,27 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
             e.printStackTrace()
         }
     }
+
+    override suspend fun signUpUser(
+        request: SignUpRequest,
+        result: (Response<SignUpResponse>) -> Unit
+    ) {
+        try {
+            val call = vcServerApi.createUser(request)
+            val response = call.awaitResponse()
+            if (response.isSuccessful) {
+                if(response.body()?.code ==0){
+                    response.body()?.data?.userseq?.let { dataStore.saveUserseq(it) }
+                }
+                result(response)
+            } else {
+                result(response)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
 
     private fun hashKey(key: ByteArray): ByteArray {
         return MessageDigest.getInstance("SHA-256").digest(key)

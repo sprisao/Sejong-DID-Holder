@@ -1,6 +1,5 @@
 package com.example.did_holder_app.ui.viewmodel
 
-import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -15,74 +14,30 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.did_holder_app.data.api.RetrofitInstance
 import com.example.did_holder_app.data.model.VC.SignUpRequest
-import com.example.did_holder_app.data.model.VC.SignUpResponse
-import com.example.did_holder_app.data.datastore.DidDataStore
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
-import retrofit2.Call
-import retrofit2.Response
 import timber.log.Timber
 
 @Composable
-fun SignUpScreen(navController: NavController) {
+fun SignUpScreen(navController: NavController, viewModel: DIDViewModel) {
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    val dataStore = DidDataStore(context)
-
-    Column() {
-
+    Column {
         Text(text = "SignUpScreen")
         UserSignupScreen(onSignup = { user ->
-            scope.launch {
-                signupUser(user, dataStore, scope, navController, context)
+            viewModel.signUpUser(user) {
+                if (it.isSuccessful) {
+                    if (it.body()?.code == 0) {
+                        Toast.makeText(context, "회원가입 완료", Toast.LENGTH_SHORT).show()
+                        navController.popBackStack()
+                    } else {
+                        Toast.makeText(context, "실패 : ${it.body()?.msg}", Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    Toast.makeText(context, "실패 : ${it.body()?.msg}", Toast.LENGTH_SHORT).show()
+                }
             }
         })
     }
 }
-
-private fun signupUser(
-    request: SignUpRequest,
-    dataStore: DidDataStore,
-    scope: CoroutineScope,
-    navController: NavController,
-    context: Context,
-) {
-    val call = RetrofitInstance.vcServerApi.createUser(request)
-    call.enqueue(object : retrofit2.Callback<SignUpResponse> {
-        override fun onResponse(
-            call: Call<SignUpResponse>,
-            response: Response<SignUpResponse>
-        ) {
-            if (response.isSuccessful) {
-                /*get userseq from SignUpRequest */
-                if (response.body()!!.code == 0) {
-                    Timber.d("Success")
-                    Timber.d(response.body().toString())
-                    val userseq = response.body()?.data?.userseq
-                    scope.launch { dataStore.saveUserseq(userseq!!) }
-                    navController.popBackStack()
-                } else if (response.body()!!.code != 0) {
-                    Toast.makeText(
-                        context,
-                        "${response.body()!!.code}: ${response.body()!!.msg}",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            } else {
-                Toast.makeText(context, "Error", Toast.LENGTH_SHORT).show()
-                /*show dialog*/
-            }
-        }
-
-        override fun onFailure(call: Call<SignUpResponse>, t: Throwable) {
-            Toast.makeText(context, "Error", Toast.LENGTH_SHORT).show()
-        }
-
-    })
-}
-
 
 @Composable
 fun UserSignupScreen(onSignup: (SignUpRequest) -> Unit) {
@@ -118,7 +73,7 @@ fun UserSignupScreen(onSignup: (SignUpRequest) -> Unit) {
         )
 
         OutlinedTextField(
-            value = userphoneno.toString(),
+            value = userphoneno,
             onValueChange = { userphoneno = it },
             label = { Text("Phone Number") },
             singleLine = true
