@@ -1,6 +1,7 @@
 package com.example.did_holder_app.ui
 
 import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,7 +24,6 @@ import timber.log.Timber
 @Composable
 fun DIDScreen(viewModel: DIDViewModel, context: Context, dataStore: DidDataStore) {
 
-//    val viewModel = remember { DIDViewModel(DIDRepositoryImpl(dataStore), context) }
 
     val scope = rememberCoroutineScope()
     val myDidDocument = dataStore.didDocumentFlow.collectAsState(initial = DidDocument())
@@ -32,12 +32,6 @@ fun DIDScreen(viewModel: DIDViewModel, context: Context, dataStore: DidDataStore
         DIDState.Existing(didDocument = myDidDocument.value!!)
     } else {
         DIDState.None
-    }
-
-    LaunchedEffect(viewModel){
-        viewModel.saveDidDocumentToBlockchain(
-            myDidDocument.value!!
-        )
     }
 
     DIDScreenState(viewModel, scope, dataStore, state)
@@ -87,7 +81,12 @@ fun EmptyDidScreen(viewModel: DIDViewModel, scope: CoroutineScope, dataStore: Di
 
 
 @Composable
-fun WithDidScreen(viewModel:DIDViewModel, scope: CoroutineScope, dataStore: DidDataStore, didDocument: DidDocument) {
+fun WithDidScreen(
+    viewModel: DIDViewModel,
+    scope: CoroutineScope,
+    dataStore: DidDataStore,
+    didDocument: DidDocument
+) {
     val context = LocalContext.current
     Column(
         modifier = Modifier
@@ -121,7 +120,17 @@ fun WithDidScreen(viewModel:DIDViewModel, scope: CoroutineScope, dataStore: DidD
             Text(text = "Did Doc 생성")
         }
         Button(onClick = {
-            viewModel.saveDidDocumentToBlockchain(didDocument)
+            viewModel.saveDidDocumentToBlockchain(didDocument) {
+                if (it.isSuccessful) {
+                    if (it.body()?.code == 0) {
+                        Toast.makeText(context, "블록체인에 저장되었습니다.", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(context, "실패 : ${it.body()?.msg}", Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    Toast.makeText(context, "실패 : ${it.body()?.msg}", Toast.LENGTH_SHORT).show()
+                }
+            }
         }) {
             Text(text = "블록체인에 저장")
         }

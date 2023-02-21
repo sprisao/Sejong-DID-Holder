@@ -86,16 +86,12 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
         }
     }
 
-    interface SaveToBlockChainCallback {
-        fun onSuccess()
-        fun onError(error: String)
-    }
 
     override suspend fun saveToBlockChain(
         didDocument: DidDocument,
-        callback: SaveToBlockChainCallback
+        result: (Response<BlockchainResponse>) -> Unit,
     ) {
-         try {
+        try {
             val call = blockchainApi.save(
                 BlockChainRequest(
                     didDocument.id,
@@ -104,12 +100,12 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
             )
             val response = call.awaitResponse()
             if (response.isSuccessful) {
-                callback.onSuccess()
+                result(response)
             } else {
-                callback.onError(response.errorBody().toString())
+                result(response)
             }
         } catch (e: Exception) {
-            callback.onError(e.message.toString())
+            e.printStackTrace()
         }
     }
 

@@ -11,7 +11,7 @@ interface DIDRepository {
     suspend fun generateDidDocument()
     suspend fun saveToBlockChain(
         didDocument: DidDocument,
-        callback: DIDRepositoryImpl.SaveToBlockChainCallback
+        result: (Response<BlockchainResponse>) -> Unit,
     )
 }
 
