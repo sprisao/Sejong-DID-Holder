@@ -14,36 +14,34 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.did_holder_app.data.model.DIDDocument.DidDocument
-import com.example.did_holder_app.data.datastore.DidDataStore
 import com.example.did_holder_app.ui.viewmodel.DIDViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @Composable
-fun DIDScreen(viewModel: DIDViewModel, dataStore: DidDataStore) {
-    val scope = rememberCoroutineScope()
-    val myDidDocument = dataStore.didDocumentFlow.collectAsState(initial = DidDocument())
+fun DIDScreen(viewModel: DIDViewModel) {
 
-    val state = if (myDidDocument.value?.id != null) {
-        DIDState.Existing(didDocument = myDidDocument.value!!)
+    val scope = rememberCoroutineScope()
+    val didDocumentState = viewModel.didDocument.collectAsState(initial = DidDocument())
+    val state = if (didDocumentState.value?.id != null) {
+        DIDState.Existing(didDocument = didDocumentState.value!!)
     } else {
         DIDState.None
     }
 
-    DIDScreenState(viewModel, scope, dataStore, state)
+    DIDScreenState(viewModel, scope, state)
 }
 
 @Composable
 fun DIDScreenState(
     viewModel: DIDViewModel,
     scope: CoroutineScope,
-    dataStore: DidDataStore,
     state: DIDState
 ) {
     when (state) {
         is DIDState.None -> EmptyDidScreen(viewModel)
-        is DIDState.Existing -> WithDidScreen(viewModel, scope, dataStore, state.didDocument)
+        is DIDState.Existing -> WithDidScreen(viewModel, scope, state.didDocument)
     }
 }
 
@@ -77,7 +75,6 @@ fun EmptyDidScreen(viewModel: DIDViewModel) {
 fun WithDidScreen(
     viewModel: DIDViewModel,
     scope: CoroutineScope,
-    dataStore: DidDataStore,
     didDocument: DidDocument
 ) {
     val context = LocalContext.current
@@ -96,7 +93,7 @@ fun WithDidScreen(
         Button(
             onClick = {
                 scope.launch {
-                    dataStore.clearDidDocument()
+                    viewModel.clearDidDocument()
                 }
             },
             modifier = Modifier.padding(16.dp)
@@ -129,4 +126,3 @@ fun WithDidScreen(
         }
     }
 }
-

@@ -64,7 +64,7 @@ fun DIDTopBar() {
 fun DidApp() {
     val context = LocalContext.current
     val dataStore = DidDataStore(context)
-    val viewModel = remember { DIDViewModel(DIDRepositoryImpl(dataStore)) }
+    val viewModel = remember { DIDViewModel(DIDRepositoryImpl(dataStore), dataStore) }
 
     val navController = rememberNavController()
     // add top appbar with title "Holder"
@@ -72,19 +72,18 @@ fun DidApp() {
         bottomBar = { DIDBottomNav(navController = navController) },
         topBar = { DIDTopBar() }) {
         Box(Modifier.padding(it))
-        NavigationGraph(navController = navController, viewModel = viewModel, dataStore = dataStore)
+        NavigationGraph(navController = navController, viewModel = viewModel)
     }
 }
 
 @Composable
 fun NavigationGraph(
     navController: NavHostController,
-    viewModel: DIDViewModel,
-    dataStore: DidDataStore
+    viewModel: DIDViewModel
 ) {
     NavHost(navController = navController, startDestination = Constants.DID) {
         composable(Constants.DID) {
-            DIDScreen(viewModel, dataStore)
+            DIDScreen(viewModel)
         }
         composable(Constants.VC) {
             VCScreen(navController)
