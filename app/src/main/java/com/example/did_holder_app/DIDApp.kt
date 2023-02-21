@@ -36,11 +36,11 @@ import com.example.did_holder_app.util.Constants
 sealed class BottomNavItem(val screenRoute: String, val title: Int, val icon: Int) {
 
     object DID :
-        BottomNavItem(Constants.DID, R.string.did_screen, R.drawable.baseline_did_24)
+        BottomNavItem(Constants.DID_SCREEN_NAME, R.string.did_screen, R.drawable.baseline_did_24)
 
-    object VC : BottomNavItem(Constants.VC, R.string.vc_screen, R.drawable.baseline_vc_24)
+    object VC : BottomNavItem(Constants.VC_SCREEN_NAME, R.string.vc_screen, R.drawable.baseline_vc_24)
     object QR : BottomNavItem(
-        Constants.QR,
+        Constants.QR_SCREEN_NAME,
         R.string.qr_screen,
         R.drawable.baseline_qr_code_scanner_24
     )
@@ -81,20 +81,20 @@ fun NavigationGraph(
     navController: NavHostController,
     viewModel: DIDViewModel
 ) {
-    NavHost(navController = navController, startDestination = Constants.DID) {
-        composable(Constants.DID) {
+    NavHost(navController = navController, startDestination = Constants.DID_SCREEN_NAME) {
+        composable(Constants.DID_SCREEN_NAME) {
             DIDScreen(viewModel)
         }
-        composable(Constants.VC) {
+        composable(Constants.VC_SCREEN_NAME) {
             VCScreen(navController, viewModel)
         }
-        composable(Constants.QR) {
+        composable(Constants.QR_SCREEN_NAME) {
             QRScreen(navController)
         }
-        composable(Constants.SIGN_UP) {
+        composable(Constants.SIGN_UP_SCREEN_NAME) {
             SignUpScreen(navController, viewModel)
         }
-        composable("${Constants.QR_RESULT}/{qrResult}") {
+        composable("${Constants.QR_RESULT_SCREEN_NAME}/{qrResult}") {
             val qrResult = it.arguments?.getString("qrResult")
             if (qrResult != null) {
                 QRResultScreen(navController, qrResult)

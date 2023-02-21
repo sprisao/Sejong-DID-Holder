@@ -59,7 +59,6 @@ class DIDViewModel(
     }
 
     // SignIn 로그임
-
     fun signInUser(
         request: SignInRequest,
         result: (Response<SignInResponse>) -> Unit,
@@ -75,6 +74,7 @@ class DIDViewModel(
             dataStore.clearUserseq()
         }
     }
+
     // VC 발급 요청
     fun requestVC(request: VCRequest, result: (Response<VcResponse>) -> Unit) {
         viewModelScope.launch {

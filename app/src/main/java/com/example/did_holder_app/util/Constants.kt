@@ -1,22 +1,26 @@
 package com.example.did_holder_app.util
 
 object Constants {
-    const val DID = "DID"
-    const val DID_METHODE = "sjbr"
-    const val VC = "VC"
-    const val VC_GRAPH = "vc_graph"
-    const val QR = "QR"
-    const val QR_RESULT = "QR_RESULT"
-    const val SIGN_UP = "SIGN_UP"
+    // Screen Names
+    const val DID_SCREEN_NAME = "DID"
+    const val VC_SCREEN_NAME = "VC"
+    const val QR_SCREEN_NAME = "QR"
+    const val QR_RESULT_SCREEN_NAME = "QR_RESULT"
+    const val SIGN_UP_SCREEN_NAME = "SIGN_UP"
 
-    const val DID_KEYSTORE_ALIAS = "did_key"
-    const val VC_KEYSTORE_ALIAS = "vc_key"
-    const val QR_KEYSTORE_ALIAS = "qr_key"
-
-    const val DID_KEYSTORE_TYPE = "AndroidKeyStore"
-    const val VC_KEYSTORE_TYPE = "AndroidKeyStore"
-    const val QR_KEYSTORE_TYPE = "AndroidKeyStore"
-
+    // DataStore
     const val DATASTORE_NAME = "DID_DATASTORE"
+
+    // KeyPair
+    const val KEYPAIR_ALGORITHM = "RSA"
+
+    // DID Document
+    const val DID_DOCUMENT_CONTEXT = "https://www.w3.org/ns/did/v1"
+    const val DID_DOCUMENT_METHODE = "sjbr"
+    const val DID_DOCUMENT_PUBLIC_KEY_TYPE = "RsaVerificationKey2023"
+    const val DID_DOCUMENT_AUTHENTICATION_TYPE = "RsaSignatureAuthentication2023"
+    const val DID_DOCUMENT_SERVICE_TYPE = "IndxService"
+    const val DID_DOCUMENT_SERVICE_ENDPOINT = "https://example.com/indx"
+
 
 }

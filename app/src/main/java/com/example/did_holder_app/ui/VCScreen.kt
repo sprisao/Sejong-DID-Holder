@@ -127,7 +127,7 @@ fun VCScreen(navController: NavController, viewModel: DIDViewModel) {
                 }
                 Text(text = "또는", style = MaterialTheme.typography.labelSmall)
                 Button(onClick = {
-                    navController.navigate(Constants.SIGN_UP)
+                    navController.navigate(Constants.SIGN_UP_SCREEN_NAME)
                 }) {
                     Text(text = "회원가입", style = MaterialTheme.typography.labelSmall)
                 }

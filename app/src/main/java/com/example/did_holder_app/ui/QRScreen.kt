@@ -20,7 +20,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import com.example.did_holder_app.data.BarCodeAnalyser
-import com.example.did_holder_app.util.Constants.QR_RESULT
+import com.example.did_holder_app.util.Constants.QR_RESULT_SCREEN_NAME
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.isGranted
@@ -101,7 +101,7 @@ fun ScanQRCode(navController: NavController) {
                         barcode.rawValue?.let { barcodeValue ->
                             barCodeVal.value = barcodeValue
                             /*Navigate to qrresultscreen with barcodevalue*/
-                            navController.navigate("$QR_RESULT/$barcodeValue")
+                            navController.navigate("$QR_RESULT_SCREEN_NAME/$barcodeValue")
                         }
                     }
                 }

@@ -11,20 +11,17 @@ interface DIDRepository {
         didDocument: DidDocument,
         result: (Response<BlockchainResponse>) -> Unit,
     )
-
     suspend fun signUpUser(
         request: SignUpRequest,
         result: (Response<SignUpResponse>) -> Unit,
     )
-
-    suspend fun requestVC(
-        request: VCRequest,
-        result: (Response<VcResponse>) -> Unit,
-    )
-
     suspend fun signInUser(
         request: SignInRequest,
         result: (Response<SignInResponse>) -> Unit,
+    )
+    suspend fun requestVC(
+        request: VCRequest,
+        result: (Response<VcResponse>) -> Unit,
     )
 }
 

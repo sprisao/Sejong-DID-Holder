@@ -21,7 +21,6 @@ import timber.log.Timber
 
 @Composable
 fun DIDScreen(viewModel: DIDViewModel) {
-
     val scope = rememberCoroutineScope()
     val didDocumentState = viewModel.didDocument.collectAsState(initial = DidDocument())
     val state = if (didDocumentState.value?.id != null) {

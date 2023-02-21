@@ -12,9 +12,13 @@ import com.example.did_holder_app.data.model.DIDDocument.DidDocument
 import com.example.did_holder_app.data.model.DIDDocument.PublicKey
 import com.example.did_holder_app.data.model.DIDDocument.Service
 import com.example.did_holder_app.data.model.VC.*
-import com.squareup.moshi.JsonAdapter
-import com.squareup.moshi.Moshi
-import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import com.example.did_holder_app.util.Constants.DID_DOCUMENT_AUTHENTICATION_TYPE
+import com.example.did_holder_app.util.Constants.DID_DOCUMENT_CONTEXT
+import com.example.did_holder_app.util.Constants.DID_DOCUMENT_METHODE
+import com.example.did_holder_app.util.Constants.DID_DOCUMENT_PUBLIC_KEY_TYPE
+import com.example.did_holder_app.util.Constants.DID_DOCUMENT_SERVICE_ENDPOINT
+import com.example.did_holder_app.util.Constants.DID_DOCUMENT_SERVICE_TYPE
+import com.example.did_holder_app.util.Constants.KEYPAIR_ALGORITHM
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import retrofit2.Response
@@ -25,23 +29,13 @@ import java.security.MessageDigest
 
 class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
 
-    val moshi: Moshi = Moshi.Builder()
-        .add(KotlinJsonAdapterFactory())
-        .build()
-
-    private val jsonAdapter: JsonAdapter<DidDocument> = moshi.adapter(DidDocument::class.java)
-
-    companion object {
-        private const val DID_METHOD = "sjbr"
-//        private const val ALGORITHM = "SHA256withRSA"
-    }
-
     private val rsaKeyPair: KeyPair by lazy {
-        KeyPairGenerator.getInstance("RSA").apply {
+        KeyPairGenerator.getInstance(KEYPAIR_ALGORITHM).apply {
             initialize(2048)
         }.generateKeyPair()
     }
 
+    // DID Document 생성
     override suspend fun generateDidDocument() {
         val publicKey = rsaKeyPair.public
         val privateKey = rsaKeyPair.private
@@ -50,44 +44,44 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
         val hashedPubKey = hashKey(message)
         val encodedPubKey = Base64.encodeToString(hashedPubKey, Base64.NO_WRAP)
 
-        val didId = "did:$DID_METHOD:$encodedPubKey"
+        val didId = "did:$DID_DOCUMENT_METHODE:$encodedPubKey"
 
         val didDocument = DidDocument(
-            context = "https://www.w3.org/ns/did/v1",
+            context = DID_DOCUMENT_CONTEXT,
             id = didId,
             publicKey = listOf(
                 PublicKey(
                     controller = didId,
                     id = "$didId#keys-1",
                     publicKeyBase64 = encodedPubKey,
-                    type = "RSAVerificationKey2023"
+                    type = DID_DOCUMENT_PUBLIC_KEY_TYPE
                 )
             ),
             authentication = listOf(
                 Authentication(
-                    type = "RSASignatureAuthentication2023",
+                    type = DID_DOCUMENT_AUTHENTICATION_TYPE,
                     publicKey = "$didId#keys-1"
                 )
             ),
             service = listOf(
                 Service(
                     id = "$didId;indx",
-                    type = "IndxService",
-                    serviceEndpoint = "https://example.com/indx"
+                    type = DID_DOCUMENT_SERVICE_TYPE,
+                    serviceEndpoint = DID_DOCUMENT_SERVICE_ENDPOINT,
                 )
             )
         )
 
         coroutineScope {
             launch {
-                val didDocumentJson = jsonAdapter.toJson(didDocument)
-                dataStore.saveDidDocument(didDocumentJson)
+                dataStore.saveDidDocument(didDocument.toString())
                 AndroidKeyStoreUtil.generateAndSaveKey(privateKey.toString())
             }
         }
     }
 
 
+    // 블록체인에 저장
     override suspend fun saveToBlockChain(
         didDocument: DidDocument,
         result: (Response<BlockchainResponse>) -> Unit,
@@ -110,6 +104,7 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
         }
     }
 
+    // 회원가입
     override suspend fun signUpUser(
         request: SignUpRequest,
         result: (Response<SignUpResponse>) -> Unit
@@ -119,6 +114,7 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
             val response = call.awaitResponse()
             if (response.isSuccessful) {
                 if (response.body()?.code == 0) {
+                    // DataStore에 userseq 저장
                     response.body()?.data?.userseq?.let { dataStore.saveUserseq(it) }
                 }
                 result(response)
@@ -130,12 +126,14 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
         }
     }
 
+    // VC요청
     override suspend fun requestVC(request: VCRequest, result: (Response<VcResponse>) -> Unit) {
         try {
             val call = vcServerApi.requestVC(request)
             val response = call.awaitResponse()
             if (response.isSuccessful) {
                 if (response.body()?.code == 0) {
+                    // DataStore에 VC 저장
                     response.body()?.vcResponseData.let { dataStore.saveVc(it.toString()) }
                 }
                 result(response)
@@ -147,6 +145,8 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
         }
     }
 
+
+    // 로그인
     override suspend fun signInUser(
         request: SignInRequest,
         result: (Response<SignInResponse>) -> Unit
@@ -156,6 +156,7 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
             val response = call.awaitResponse()
             if (response.isSuccessful) {
                 if (response.body()?.code == 0) {
+                    // DataStore에 userseq 저장
                     response.body()?.data?.userSequence.let {
                         if (it != null) {
                             dataStore.saveUserseq(it)
