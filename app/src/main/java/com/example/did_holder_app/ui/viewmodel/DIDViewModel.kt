@@ -19,7 +19,7 @@ class DIDViewModel(
 ) :
     ViewModel() {
     val didDocument: Flow<DidDocument?> = dataStore.didDocumentFlow
-    val vc: Flow<VcResponse?> = dataStore.vcFlow
+    val vc: Flow<VcResponseData?> = dataStore.vcFlow
     val userSeq: Flow<Int?> = dataStore.userSeqFlow
 
     // DID Document 생성

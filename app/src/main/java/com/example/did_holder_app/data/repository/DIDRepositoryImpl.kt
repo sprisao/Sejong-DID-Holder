@@ -40,7 +40,7 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
         .build()
 
     private val didDocJsonAdapter: JsonAdapter<DidDocument> = moshi.adapter(DidDocument::class.java)
-    private val vcResponseDataJsonAdapter: JsonAdapter<VcResponse> = moshi.adapter(VcResponse::class.java)
+    private val vcResponseDataJsonAdapter: JsonAdapter<VcResponseData> = moshi.adapter(VcResponseData::class.java)
 
 //    private val rsaKeyPair: KeyPair by lazy {
 //        KeyPairGenerator.getInstance(KEYPAIR_ALGORITHM).apply {
@@ -169,7 +169,7 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
                     // DataStore에 VC 저장
                     try {
                         response.body().let {
-                            val vcResponseData = vcResponseDataJsonAdapter.toJson(it)
+                            val vcResponseData = vcResponseDataJsonAdapter.toJson(it?.vcResponseData)
                             vcResponseData?.let { data ->
                                 dataStore.saveVc(data)
                             }
