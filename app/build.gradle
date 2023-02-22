@@ -117,4 +117,9 @@ dependencies {
 
     // bitcoinj
     implementation 'org.bitcoinj:bitcoinj-core:0.15.10'
+
+    // bouncy castle
+    implementation 'org.bouncycastle:bcprov-jdk15on:1.70'
+    implementation 'org.bouncycastle:bcpkix-jdk15on:1.70'
+
 }

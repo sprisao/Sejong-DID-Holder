@@ -24,11 +24,17 @@ import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.bitcoinj.core.Base58
+import org.bouncycastle.crypto.generators.Ed25519KeyPairGenerator
+import org.bouncycastle.crypto.params.Ed25519KeyGenerationParameters
+import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters
+import org.bouncycastle.crypto.params.Ed25519PublicKeyParameters
 import retrofit2.Response
 import retrofit2.awaitResponse
+import timber.log.Timber
 import java.security.KeyPair
 import java.security.KeyPairGenerator
 import java.security.MessageDigest
+import java.security.SecureRandom
 
 class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
 
@@ -38,24 +44,40 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
 
     private val jsonAdapter: JsonAdapter<DidDocument> = moshi.adapter(DidDocument::class.java)
 
-    private val rsaKeyPair: KeyPair by lazy {
-        KeyPairGenerator.getInstance(KEYPAIR_ALGORITHM).apply {
-            initialize(2048)
-        }.generateKeyPair()
-    }
+//    private val rsaKeyPair: KeyPair by lazy {
+//        KeyPairGenerator.getInstance(KEYPAIR_ALGORITHM).apply {
+//            initialize(2048)
+//        }.generateKeyPair()
+//    }
 
     private fun hashKey(key: ByteArray): ByteArray {
         return MessageDigest.getInstance("SHA-256").digest(key)
     }
+
     // DID Document 생성
     override suspend fun generateDidDocument() {
-        val publicKey = rsaKeyPair.public
-        val privateKey = rsaKeyPair.private
-        val publicKeyByte = publicKey.toString().toByteArray()
+//        val publicKey = rsaKeyPair.public
+//        val privateKey = rsaKeyPair.private
 
+        val random = SecureRandom()
+
+        val keyPairGenerator = Ed25519KeyPairGenerator()
+        keyPairGenerator.init(Ed25519KeyGenerationParameters(random))
+        val keyPair = keyPairGenerator.generateKeyPair()
+        val publicKeyParams: Ed25519PublicKeyParameters =
+            keyPair.public as Ed25519PublicKeyParameters
+        val privateKeyParams: Ed25519PrivateKeyParameters =
+            keyPair.private as Ed25519PrivateKeyParameters
+
+        val publicKeyByte = publicKeyParams.encoded
+        val privateKeyByte = privateKeyParams.encoded
+
+        Timber.d(publicKeyByte.toString())
+        Timber.d(privateKeyByte.toString())
         val publicKeyBase58 = Base58.encode(publicKeyByte)
 
         val hashedPubKey = hashKey(publicKeyByte)
+
         val did = Base58.encode(hashedPubKey)
 
         val didId = "did:$DID_DOCUMENT_METHODE:$did"
@@ -90,7 +112,7 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
             launch {
                 val didDocumentJson = jsonAdapter.toJson(didDocument)
                 dataStore.saveDidDocument(didDocumentJson)
-                AndroidKeyStoreUtil.generateAndSaveKey(privateKey.toString())
+                AndroidKeyStoreUtil.generateAndSaveKey(privateKeyByte.toString())
             }
         }
     }
@@ -186,7 +208,6 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
             e.printStackTrace()
         }
     }
-
 
 
 }
