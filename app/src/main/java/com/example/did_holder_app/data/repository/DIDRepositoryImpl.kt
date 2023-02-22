@@ -19,6 +19,9 @@ import com.example.did_holder_app.util.Constants.DID_DOCUMENT_PUBLIC_KEY_TYPE
 import com.example.did_holder_app.util.Constants.DID_DOCUMENT_SERVICE_ENDPOINT
 import com.example.did_holder_app.util.Constants.DID_DOCUMENT_SERVICE_TYPE
 import com.example.did_holder_app.util.Constants.KEYPAIR_ALGORITHM
+import com.squareup.moshi.JsonAdapter
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import retrofit2.Response
@@ -28,6 +31,12 @@ import java.security.KeyPairGenerator
 import java.security.MessageDigest
 
 class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
+
+    val moshi: Moshi = Moshi.Builder()
+        .add(KotlinJsonAdapterFactory())
+        .build()
+
+    private val jsonAdapter: JsonAdapter<DidDocument> = moshi.adapter(DidDocument::class.java)
 
     private val rsaKeyPair: KeyPair by lazy {
         KeyPairGenerator.getInstance(KEYPAIR_ALGORITHM).apply {
@@ -74,7 +83,8 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
 
         coroutineScope {
             launch {
-                dataStore.saveDidDocument(didDocument.toString())
+                val didDocumentJson = jsonAdapter.toJson(didDocument)
+                dataStore.saveDidDocument(didDocumentJson)
                 AndroidKeyStoreUtil.generateAndSaveKey(privateKey.toString())
             }
         }
