@@ -1,6 +1,5 @@
 package com.example.did_holder_app.data.repository
 
-import android.util.Base64
 import com.example.did_holder_app.data.api.RetrofitInstance.blockchainApi
 import com.example.did_holder_app.data.api.RetrofitInstance.vcServerApi
 import com.example.did_holder_app.data.datastore.DidDataStore
@@ -24,6 +23,7 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import org.bitcoinj.core.Base58
 import retrofit2.Response
 import retrofit2.awaitResponse
 import java.security.KeyPair
@@ -44,16 +44,21 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
         }.generateKeyPair()
     }
 
+    private fun hashKey(key: ByteArray): ByteArray {
+        return MessageDigest.getInstance("SHA-256").digest(key)
+    }
     // DID Document 생성
     override suspend fun generateDidDocument() {
         val publicKey = rsaKeyPair.public
         val privateKey = rsaKeyPair.private
-        val message = publicKey.toString().toByteArray()
+        val publicKeyByte = publicKey.toString().toByteArray()
 
-        val hashedPubKey = hashKey(message)
-        val encodedPubKey = Base64.encodeToString(hashedPubKey, Base64.NO_WRAP)
+        val publicKeyBase58 = Base58.encode(publicKeyByte)
 
-        val didId = "did:$DID_DOCUMENT_METHODE:$encodedPubKey"
+        val hashedPubKey = hashKey(publicKeyByte)
+        val did = Base58.encode(hashedPubKey)
+
+        val didId = "did:$DID_DOCUMENT_METHODE:$did"
 
         val didDocument = DidDocument(
             context = DID_DOCUMENT_CONTEXT,
@@ -62,7 +67,7 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
                 PublicKey(
                     controller = didId,
                     id = "$didId#keys-1",
-                    publicKeyBase64 = encodedPubKey,
+                    publicKeyBase58 = publicKeyBase58,
                     type = DID_DOCUMENT_PUBLIC_KEY_TYPE
                 )
             ),
@@ -183,8 +188,5 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
     }
 
 
-    private fun hashKey(key: ByteArray): ByteArray {
-        return MessageDigest.getInstance("SHA-256").digest(key)
-    }
 
 }
