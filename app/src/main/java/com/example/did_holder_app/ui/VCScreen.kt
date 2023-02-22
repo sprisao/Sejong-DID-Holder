@@ -47,14 +47,13 @@ fun VCScreen(navController: NavController, viewModel: DIDViewModel) {
                 Button(onClick = {
                     viewModel.requestVC(
                         VCRequest(
-                            savedUserSeq.value!!,
-                            savedDidDocument.value?.id!!
+                            savedUserSeq.value,
+                            savedDidDocument.value?.id
                         )
                     ) {
                         if (it.isSuccessful) {
                             if (it.body()?.code == 0) {
-                                Toast.makeText(context, "회원가입 완료", Toast.LENGTH_SHORT).show()
-                                navController.popBackStack()
+                                Toast.makeText(context, "VC 생성완료", Toast.LENGTH_SHORT).show()
                             } else {
                                 Toast.makeText(
                                     context,
