@@ -17,7 +17,6 @@ import com.example.did_holder_app.util.Constants.DID_DOCUMENT_METHODE
 import com.example.did_holder_app.util.Constants.DID_DOCUMENT_PUBLIC_KEY_TYPE
 import com.example.did_holder_app.util.Constants.DID_DOCUMENT_SERVICE_ENDPOINT
 import com.example.did_holder_app.util.Constants.DID_DOCUMENT_SERVICE_TYPE
-import com.example.did_holder_app.util.Constants.KEYPAIR_ALGORITHM
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
@@ -31,8 +30,6 @@ import org.bouncycastle.crypto.params.Ed25519PublicKeyParameters
 import retrofit2.Response
 import retrofit2.awaitResponse
 import timber.log.Timber
-import java.security.KeyPair
-import java.security.KeyPairGenerator
 import java.security.MessageDigest
 import java.security.SecureRandom
 
@@ -42,7 +39,8 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
         .add(KotlinJsonAdapterFactory())
         .build()
 
-    private val jsonAdapter: JsonAdapter<DidDocument> = moshi.adapter(DidDocument::class.java)
+    private val didDocJsonAdapter: JsonAdapter<DidDocument> = moshi.adapter(DidDocument::class.java)
+    private val vcResponseDataJsonAdapter: JsonAdapter<VcResponse> = moshi.adapter(VcResponse::class.java)
 
 //    private val rsaKeyPair: KeyPair by lazy {
 //        KeyPairGenerator.getInstance(KEYPAIR_ALGORITHM).apply {
@@ -72,8 +70,6 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
         val publicKeyByte = publicKeyParams.encoded
         val privateKeyByte = privateKeyParams.encoded
 
-        Timber.d(publicKeyByte.toString())
-        Timber.d(privateKeyByte.toString())
         val publicKeyBase58 = Base58.encode(publicKeyByte)
 
         val hashedPubKey = hashKey(publicKeyByte)
@@ -110,7 +106,7 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
 
         coroutineScope {
             launch {
-                val didDocumentJson = jsonAdapter.toJson(didDocument)
+                val didDocumentJson = didDocJsonAdapter.toJson(didDocument)
                 dataStore.saveDidDocument(didDocumentJson)
                 AndroidKeyStoreUtil.generateAndSaveKey(privateKeyByte.toString())
             }
@@ -171,7 +167,16 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
             if (response.isSuccessful) {
                 if (response.body()?.code == 0) {
                     // DataStore에 VC 저장
-                    response.body()?.vcResponseData.let { dataStore.saveVc(it.toString()) }
+                    try {
+                        response.body().let {
+                            val vcResponseData = vcResponseDataJsonAdapter.toJson(it)
+                            vcResponseData?.let { data ->
+                                dataStore.saveVc(data)
+                            }
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
                 }
                 result(response)
             } else {
