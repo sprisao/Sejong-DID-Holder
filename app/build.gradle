@@ -119,7 +119,10 @@ dependencies {
     implementation 'org.bitcoinj:bitcoinj-core:0.15.10'
 
     // bouncy castle
-    implementation 'org.bouncycastle:bcprov-jdk15on:1.70'
-    implementation 'org.bouncycastle:bcpkix-jdk15on:1.70'
+//    implementation 'org.bouncycastle:bcprov-jdk15on:1.70'
+//    implementation 'org.bouncycastle:bcpkix-jdk15on:1.70'
+
+    //guava
+    implementation 'com.google.guava:guava:31.0.1-android'
 
 }
