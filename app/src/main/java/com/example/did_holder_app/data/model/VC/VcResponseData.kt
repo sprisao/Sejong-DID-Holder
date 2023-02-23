@@ -22,6 +22,16 @@ data class VcResponseData(
     val vcProof: VcProof,
     @Json(name = "type")
     val type: List<String>
-){
-    constructor() : this(listOf(), listOf(), "", "", "", "", VcProof(), listOf())
+) {
+    constructor() : this(
+        listOf(),
+        listOf(),
+        "",
+        "",
+        "",
+        "",
+        VcProof(),
+        listOf()
+    )
+
 }

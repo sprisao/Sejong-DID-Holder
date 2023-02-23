@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -33,6 +34,7 @@ fun VCScreen(navController: NavController, viewModel: DIDViewModel) {
     val savedDidDocument = viewModel.didDocument.collectAsState(initial = DidDocument())
     val savedUserSeq = viewModel.userSeq.collectAsState(initial = 0)
 
+    var isLoading by remember { mutableStateOf(false) }
 
 
     Column(
@@ -44,30 +46,40 @@ fun VCScreen(navController: NavController, viewModel: DIDViewModel) {
     ) {
         when {
             (savedUserSeq.value != 0 && savedUserSeq.value != null) && savedVC.value == null -> {
-                Button(onClick = {
-                    viewModel.requestVC(
-                        VCRequest(
-                            savedUserSeq.value,
-                            savedDidDocument.value?.id
-                        )
-                    ) {
-                        if (it.isSuccessful) {
-                            if (it.body()?.code == 0) {
-                                Toast.makeText(context, "VC 생성완료", Toast.LENGTH_SHORT).show()
+                Button(
+                    onClick = {
+                        isLoading = true
+                        viewModel.requestVC(
+                            VCRequest(
+                                savedUserSeq.value,
+                                savedDidDocument.value?.id
+                            )
+                        ) {
+                            isLoading = false
+                            if (it.isSuccessful) {
+                                if (it.body()?.code == 0) {
+                                    Toast.makeText(context, "VC 생성완료", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    Toast.makeText(
+                                        context,
+                                        "실패 : ${it.body()?.msg}",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
                             } else {
-                                Toast.makeText(
-                                    context,
-                                    "실패 : ${it.body()?.msg}",
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                                Toast.makeText(context, "실패 : ${it.message()}", Toast.LENGTH_SHORT)
+                                    .show()
                             }
-                        } else {
-                            Toast.makeText(context, "실패 : ${it.message()}", Toast.LENGTH_SHORT)
-                                .show()
                         }
+                    },
+                    enabled = !isLoading
+                )
+                {
+                    if (isLoading) {
+                        CircularProgressIndicator()
+                    } else {
+                        Text(text = "VC생성", style = MaterialTheme.typography.labelSmall)
                     }
-                }) {
-                    Text(text = "VC생성", style = MaterialTheme.typography.labelSmall)
                 }
                 Button(onClick = {
                     scope.launch {

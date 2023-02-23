@@ -18,6 +18,4 @@ data class VpProof(
     val proofValue: String,
     @Json(name = "type")
     val type: String,
-    @Json(name = "verificationMethod")
-    val verificationMethod: String
 )

@@ -16,8 +16,12 @@ data class VcProof(
     val proofValue: String,
     @Json(name = "type")
     val type: String,
-    @Json(name = "verificationMethod")
-    val verificationMethod: String
 ){
-    constructor() : this("", "", "", "", "", "")
+    constructor() : this(
+        "",
+        "",
+        "",
+        "",
+        ""
+    )
 }
