@@ -25,9 +25,9 @@ object AndroidKeyStoreUtil {
         keyStore.load(null)
 
         // KeyStore에 이미 키가 존재하는지 확인
-        if (keyStore.containsAlias(keyAlias)) {
-            throw Exception("KeyStore already contains key with alias $keyAlias")
-        }
+//        if (keyStore.containsAlias(keyAlias)) {
+//            throw Exception("KeyStore already contains key with alias $keyAlias")
+//        }
 
         val keyPairGenerator = Ed25519KeyPairGenerator()
 
