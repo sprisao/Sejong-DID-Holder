@@ -1,6 +1,6 @@
 <resources>
-    <string name="app_name">DID_Holder_App</string>
-    <string name="did_screen">DID</string>
-    <string name="vc_screen">VC</string>
-    <string name="qr_screen">QR</string>
+    <string name="app_name">세종DID</string>
+    <string name="did_screen">MyDID</string>
+    <string name="vc_screen">사원증</string>
+    <string name="qr_screen">출입인증</string>
 </resources>

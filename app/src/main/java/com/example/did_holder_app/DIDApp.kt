@@ -36,7 +36,7 @@ import com.example.did_holder_app.util.Constants
 sealed class BottomNavItem(val screenRoute: String, val title: Int, val icon: Int) {
 
     object DID :
-        BottomNavItem(Constants.DID_SCREEN_NAME, R.string.did_screen, R.drawable.baseline_did_24)
+        BottomNavItem(Constants.DID_SCREEN_NAME, R.string.did_screen, R.drawable.baseline_person_24)
 
     object VC : BottomNavItem(Constants.VC_SCREEN_NAME, R.string.vc_screen, R.drawable.baseline_vc_24)
     object QR : BottomNavItem(
@@ -54,7 +54,7 @@ fun DIDTopBar() {
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = "DID Holder")
+                Text(text = "세종텔레콤 출입시스템")
             }
         },
     )
