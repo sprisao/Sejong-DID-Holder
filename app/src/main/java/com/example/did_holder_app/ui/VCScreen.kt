@@ -23,7 +23,14 @@ import com.example.did_holder_app.data.model.VC.VCRequest
 import com.example.did_holder_app.data.model.VC.VcResponseData
 import com.example.did_holder_app.ui.viewmodel.DIDViewModel
 import com.example.did_holder_app.util.Constants
+import com.squareup.moshi.JsonAdapter
+import com.squareup.moshi.JsonReader
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.launch
+import okhttp3.internal.addHeaderLenient
+import okio.Buffer
+import timber.log.Timber
 
 @Composable
 fun VCScreen(navController: NavController, viewModel: DIDViewModel) {
@@ -34,8 +41,12 @@ fun VCScreen(navController: NavController, viewModel: DIDViewModel) {
     val savedDidDocument = viewModel.didDocument.collectAsState(initial = DidDocument())
     val savedUserSeq = viewModel.userSeq.collectAsState(initial = 0)
 
+
     var isLoading by remember { mutableStateOf(false) }
 
+    val moshi: Moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
+    val jsonAdapter: JsonAdapter<VcResponseData> = moshi.adapter(VcResponseData::class.java)
+    val vcResponseData = jsonAdapter.toJson(savedVC.value)
 
     Column(
         modifier = Modifier
@@ -90,7 +101,7 @@ fun VCScreen(navController: NavController, viewModel: DIDViewModel) {
                 }
             }
             savedVC.value != null -> {
-                Text(savedVC.value.toString(), style = MaterialTheme.typography.labelSmall)
+                Text(vcResponseData.toString(), style = MaterialTheme.typography.labelSmall)
                 Button(onClick = {
                     scope.launch {
                         viewModel.clearVc()

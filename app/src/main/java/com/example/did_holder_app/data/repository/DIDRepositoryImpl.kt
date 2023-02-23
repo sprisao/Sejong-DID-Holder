@@ -98,11 +98,12 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
         didDocument: DidDocument,
         result: (Response<BlockchainResponse>) -> Unit,
     ) {
+        val didDocumentJson = didDocJsonAdapter.toJson(didDocument)
         try {
             val call = blockchainApi.save(
                 BlockChainRequest(
                     didDocument.id,
-                    didDocument.toString()
+                    didDocumentJson.toString()
                 )
             )
             val response = call.awaitResponse()
