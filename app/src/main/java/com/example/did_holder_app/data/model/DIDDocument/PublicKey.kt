@@ -6,12 +6,12 @@ import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
 data class PublicKey(
-    @Json(name = "controller")
-    val controller: String,
     @Json(name = "id")
     val id: String,
-    @Json(name = "publicKeyBase64")
-    val publicKeyBase58: String,
     @Json(name = "type")
-    val type: String
+    val type: String,
+    @Json(name = "controller")
+    val controller: String,
+    @Json(name = "publicKeyBase58")
+    val publicKeyBase58: String,
 )

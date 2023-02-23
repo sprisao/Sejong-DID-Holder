@@ -8,30 +8,30 @@ import com.squareup.moshi.JsonClass
 data class VcResponseData(
     @Json(name = "@context")
     val context: List<String>,
-    @Json(name = "credentialSubject")
-    val vcCredentialSubject: List<VcCredentialSubject>,
-    @Json(name = "expirationDate")
-    val expirationDate: String,
     @Json(name = "id")
     val id: String,
-    @Json(name = "issuanceDate")
-    val issuanceDate: String,
+    @Json(name = "type")
+    val type: List<String>,
+    @Json(name = "credentialSubject")
+    val vcCredentialSubject: List<VcCredentialSubject>,
     @Json(name = "issuer")
     val issuer: String,
+    @Json(name = "issuanceDate")
+    val issuanceDate: String,
+    @Json(name = "expirationDate")
+    val expirationDate: String,
     @Json(name = "proof")
     val vcProof: VcProof,
-    @Json(name = "type")
-    val type: List<String>
 ) {
     constructor() : this(
         listOf(),
+        "",
+        listOf(),
         listOf(),
         "",
         "",
         "",
-        "",
-        VcProof(),
-        listOf()
+        VcProof()
     )
 
 }

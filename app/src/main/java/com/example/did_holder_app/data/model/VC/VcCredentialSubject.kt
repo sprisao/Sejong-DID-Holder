@@ -6,14 +6,16 @@ import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
 data class VcCredentialSubject(
+    @Json(name = "type")
+    val type: String,
+    @Json(name = "position")
+    val position: String,
     @Json(name = "name")
     val name: String,
     @Json(name = "phoneno")
     val phoneno: String,
-    @Json(name = "position")
-    val position: String,
     @Json(name = "status")
     val status: String,
-    @Json(name = "type")
-    val type: String
+    @Json(name = "password")
+    val password: String
 )
