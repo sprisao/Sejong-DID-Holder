@@ -1,9 +1,11 @@
 package com.example.did_holder_app.data.repository
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import com.example.did_holder_app.data.api.RetrofitInstance.blockchainApi
 import com.example.did_holder_app.data.api.RetrofitInstance.vcServerApi
 import com.example.did_holder_app.data.datastore.DidDataStore
-import com.example.did_holder_app.data.keystore.AndroidKeyStoreUtil
+import com.example.did_holder_app.data.keystore.AndroidKeyStoreUtil.generateAndStoreEd25519KeyPair
 import com.example.did_holder_app.data.model.Blockchain.BlockChainRequest
 import com.example.did_holder_app.data.model.Blockchain.BlockchainResponse
 import com.example.did_holder_app.data.model.DIDDocument.Authentication
@@ -23,15 +25,9 @@ import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.bitcoinj.core.Base58
-import org.bouncycastle.crypto.generators.Ed25519KeyPairGenerator
-import org.bouncycastle.crypto.params.Ed25519KeyGenerationParameters
-import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters
-import org.bouncycastle.crypto.params.Ed25519PublicKeyParameters
 import retrofit2.Response
 import retrofit2.awaitResponse
-import timber.log.Timber
 import java.security.MessageDigest
-import java.security.SecureRandom
 
 class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
 
@@ -42,37 +38,21 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
     private val didDocJsonAdapter: JsonAdapter<DidDocument> = moshi.adapter(DidDocument::class.java)
     private val vcResponseDataJsonAdapter: JsonAdapter<VcResponseData> = moshi.adapter(VcResponseData::class.java)
 
-//    private val rsaKeyPair: KeyPair by lazy {
-//        KeyPairGenerator.getInstance(KEYPAIR_ALGORITHM).apply {
-//            initialize(2048)
-//        }.generateKeyPair()
-//    }
-
     private fun hashKey(key: ByteArray): ByteArray {
         return MessageDigest.getInstance("SHA-256").digest(key)
     }
 
     // DID Document 생성
+    @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun generateDidDocument() {
-//        val publicKey = rsaKeyPair.public
-//        val privateKey = rsaKeyPair.private
 
-        val random = SecureRandom()
 
-        val keyPairGenerator = Ed25519KeyPairGenerator()
-        keyPairGenerator.init(Ed25519KeyGenerationParameters(random))
-        val keyPair = keyPairGenerator.generateKeyPair()
-        val publicKeyParams: Ed25519PublicKeyParameters =
-            keyPair.public as Ed25519PublicKeyParameters
-        val privateKeyParams: Ed25519PrivateKeyParameters =
-            keyPair.private as Ed25519PrivateKeyParameters
+        val keyPair = generateAndStoreEd25519KeyPair()
 
-        val publicKeyByte = publicKeyParams.encoded
-        val privateKeyByte = privateKeyParams.encoded
+        val publicKeyByte = keyPair.second.encoded
+        val hashedPubKey = hashKey(publicKeyByte)
 
         val publicKeyBase58 = Base58.encode(publicKeyByte)
-
-        val hashedPubKey = hashKey(publicKeyByte)
 
         val did = Base58.encode(hashedPubKey)
 
@@ -108,7 +88,6 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
             launch {
                 val didDocumentJson = didDocJsonAdapter.toJson(didDocument)
                 dataStore.saveDidDocument(didDocumentJson)
-                AndroidKeyStoreUtil.generateAndSaveKey(privateKeyByte.toString())
             }
         }
     }

@@ -1,79 +1,70 @@
 package com.example.did_holder_app.data.keystore
 
-import android.security.keystore.KeyGenParameterSpec
+import android.os.Build
 import android.security.keystore.KeyProperties
+import android.security.keystore.KeyProtection
+import androidx.annotation.RequiresApi
+import org.bouncycastle.crypto.generators.Ed25519KeyPairGenerator
+import org.bouncycastle.crypto.params.Ed25519KeyGenerationParameters
+import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters
+import org.bouncycastle.crypto.params.Ed25519PublicKeyParameters
 import java.security.KeyStore
 import java.security.SecureRandom
-import javax.crypto.Cipher
-import javax.crypto.KeyGenerator
-import javax.crypto.SecretKey
-import javax.crypto.spec.GCMParameterSpec
+import javax.crypto.spec.SecretKeySpec
 
 
 object AndroidKeyStoreUtil {
-    private const val KEY_LENGTH_BIT = 128
-    private val KEY_GENERATOR =
-        KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore")
 
-    private val KEYSTORE = KeyStore.getInstance("AndroidKeyStore")
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun generateAndStoreEd25519KeyPair(): Pair<Ed25519PrivateKeyParameters, Ed25519PublicKeyParameters> {
 
-    private val IV = ByteArray(12)
+        val keyAlias = "did_key_alias"
 
-    private val CIPHER_WITH_ALGORITHM = Cipher.getInstance("AES/GCM/NoPadding")
+        // KeyStore 불러옴
+        val keyStore = KeyStore.getInstance("AndroidKeyStore")
+        keyStore.load(null)
 
-    // 암호화 후 키스토어에 저장
-    fun generateAndSaveKey(plaintext: String): ByteArray {
+        // KeyStore에 이미 키가 존재하는지 확인
+        if (keyStore.containsAlias(keyAlias)) {
+            throw Exception("KeyStore already contains key with alias $keyAlias")
+        }
 
-        val keyGenParameterSpec = KeyGenParameterSpec.Builder(
-            "key1",
-            KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
-        )
-            .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
-            .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
-            .setUserAuthenticationRequired(false)
-            .setRandomizedEncryptionRequired(false)
-            .build()
+        val keyPairGenerator = Ed25519KeyPairGenerator()
 
-        KEY_GENERATOR.init(keyGenParameterSpec)
-        val secretKey: SecretKey = KEY_GENERATOR.generateKey()
+        val random = SecureRandom()
 
-        SecureRandom().nextBytes(IV)
+        keyPairGenerator.init(Ed25519KeyGenerationParameters(random))
 
-        // Encrypt the plaintext
-        CIPHER_WITH_ALGORITHM.init(
-            Cipher.ENCRYPT_MODE, secretKey, GCMParameterSpec(
-                KEY_LENGTH_BIT, IV
-            )
-        )
-        val ciphertext = CIPHER_WITH_ALGORITHM.doFinal(plaintext.toByteArray())
+        // 대칭키쌍 생성
+        val keyPair = keyPairGenerator.generateKeyPair()
 
-        KEYSTORE.load(null)
+        // 개인키
+        val privateKey = keyPair.private as Ed25519PrivateKeyParameters
 
-        KEYSTORE.setEntry(
-            "key1",
-            KeyStore.SecretKeyEntry(secretKey),
-            null
+        // 개인키를 byte로 변환
+        val privateKeyEncoded = privateKey.encoded
+
+        // KeyStore Entry 생성
+        val keyEntry = KeyStore.SecretKeyEntry(
+            SecretKeySpec(privateKeyEncoded, KeyProperties.KEY_ALGORITHM_AES),
         )
 
-        return ciphertext
 
+        // KeyStore에 저장
+        keyStore.setEntry(
+            keyAlias,
+            keyEntry,
+            KeyProtection.Builder(KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
+                .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+                .setRandomizedEncryptionRequired(false)
+                .build()
+        )
+
+        // 공개키
+        val publicKey = keyPair.public as Ed25519PublicKeyParameters
+
+        return Pair(privateKey, publicKey)
     }
 
-    // 키 불러오고 복호화
-    fun loadAndDecryptKey(ciphertext: ByteArray): String {
-
-        // Load the key from the Android Keystore
-        KEYSTORE.load(null)
-
-        val secretKey = KEYSTORE.getKey("key1", null) as SecretKey
-
-        // Decrypt the ciphertext
-        CIPHER_WITH_ALGORITHM.init(
-            Cipher.DECRYPT_MODE, secretKey, GCMParameterSpec(
-                KEY_LENGTH_BIT, IV
-            )
-        )
-
-        return String(CIPHER_WITH_ALGORITHM.doFinal(ciphertext))
-    }
 }
