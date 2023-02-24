@@ -14,10 +14,14 @@ data class DidDocument(
     val publicKey: List<PublicKey>,
     @Json(name = "authentication")
     val authentication: List<Authentication>,
-    @Json(name = "service")
-    val service: List<Service>
+//    @Json(name = "service")
+//    val service: List<Service>
 ) {
-    constructor() : this( "", "", listOf(), listOf(), listOf())
+    constructor() : this(
+        "",
+        "",
+        listOf(),
+        listOf(),)
 }
 
 //{

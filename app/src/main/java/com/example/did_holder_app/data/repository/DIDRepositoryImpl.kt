@@ -63,25 +63,25 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
             id = didId,
             publicKey = listOf(
                 PublicKey(
+                    id = didId,
+                    type = DID_DOCUMENT_PUBLIC_KEY_TYPE,
                     controller = didId,
-                    id = "$didId#keys-1",
                     publicKeyBase58 = publicKeyBase58,
-                    type = DID_DOCUMENT_PUBLIC_KEY_TYPE
                 )
             ),
             authentication = listOf(
                 Authentication(
-                    type = DID_DOCUMENT_AUTHENTICATION_TYPE,
-                    publicKey = "$didId#keys-1"
+//                    type = DID_DOCUMENT_AUTHENTICATION_TYPE,
+                    publicKey = didId
                 )
             ),
-            service = listOf(
-                Service(
-                    id = "$didId;indx",
-                    type = DID_DOCUMENT_SERVICE_TYPE,
-                    serviceEndpoint = DID_DOCUMENT_SERVICE_ENDPOINT,
-                )
-            )
+//            service = listOf(
+//                Service(
+//                    id = "$didId;indx",
+//                    type = DID_DOCUMENT_SERVICE_TYPE,
+//                    serviceEndpoint = DID_DOCUMENT_SERVICE_ENDPOINT,
+//                )
+//            )
         )
 
         coroutineScope {
