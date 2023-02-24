@@ -17,5 +17,5 @@ data class VpProof(
     @Json(name = "challenge")
     val challenge: String,
     @Json(name = "proofValue")
-    val proofValue: String?,
+    var proofValue: String?,
 )

@@ -248,34 +248,31 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
 
         val myVPtoJSon = vpJsonAdapter.toJson(myVP)
 
-
         // todo: vp 서명
-//        AndroidKeyStoreUtil.signVpWithPrivateKey(vp = myVPtoJSon.toString().toByteArray() )
-
         val privateKey = dataStore.privateKeyFlow.first()
         Timber.d("privateKey : ${privateKey}")
 
         val privateKeyByte = Base64.decode(privateKey, Base64.DEFAULT)
-        Timber.d("privateKeyByte : $privateKeyByte")
+        Timber.d("privateKeyByte : ${Hex.toHexString(privateKeyByte)}")
 
-        try {
-            val acturalPrivateKey = Ed25519PrivateKeyParameters(privateKeyByte, 0)
-            // Sign data with private key
-            val signer = Ed25519Signer()
-            signer.init(true, acturalPrivateKey)
-            signer.update(myVP.toString().toByteArray(), 0, myVP.toString().toByteArray().size)
-            val signature = signer.generateSignature()
-            val signatureBase64 = Base64.encodeToString(signature, Base64.DEFAULT)
-            Timber.d("signature : $signatureBase64")
-        } catch (
-            e: Exception
-        ) {
-            e.printStackTrace()
-        }
-
+        val acturalPrivateKey = Ed25519PrivateKeyParameters(privateKeyByte, 0)
+        // Sign data with private key
+        val signer = Ed25519Signer()
+        signer.init(true, acturalPrivateKey)
+        signer.update(
+            myVPtoJSon.toString().toByteArray(),
+            0,
+            myVPtoJSon.toString().toByteArray().size
+        )
+        val signature = signer.generateSignature()
+        val signatureBase64 = Base64.encodeToString(signature, Base64.DEFAULT)
+        Timber.d("signature : $signatureBase64")
 
         // todo: 서명 된 vp 생성
+        myVP.vpProof.proofValue = signatureBase64
 
+        val myVPtoJSon2 = vpJsonAdapter.toJson(myVP)
+        Timber.d(myVPtoJSon2)
 
     }
 
