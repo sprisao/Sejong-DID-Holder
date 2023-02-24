@@ -1,26 +1,24 @@
 package com.example.did_holder_app.data.repository
 
 import android.os.Build
+import android.util.Base64
 import androidx.annotation.RequiresApi
 import com.example.did_holder_app.data.api.RetrofitInstance.blockchainApi
 import com.example.did_holder_app.data.api.RetrofitInstance.vcServerApi
 import com.example.did_holder_app.data.datastore.DidDataStore
+import com.example.did_holder_app.data.keystore.AndroidKeyStoreUtil
 import com.example.did_holder_app.data.keystore.AndroidKeyStoreUtil.generateAndStoreEd25519KeyPair
 import com.example.did_holder_app.data.model.Blockchain.BlockChainRequest
 import com.example.did_holder_app.data.model.Blockchain.BlockchainResponse
 import com.example.did_holder_app.data.model.DIDDocument.Authentication
 import com.example.did_holder_app.data.model.DIDDocument.DidDocument
 import com.example.did_holder_app.data.model.DIDDocument.PublicKey
-import com.example.did_holder_app.data.model.DIDDocument.Service
 import com.example.did_holder_app.data.model.VC.*
 import com.example.did_holder_app.data.model.VP.VP
 import com.example.did_holder_app.data.model.VP.VpProof
-import com.example.did_holder_app.util.Constants.DID_DOCUMENT_AUTHENTICATION_TYPE
 import com.example.did_holder_app.util.Constants.DID_DOCUMENT_CONTEXT
 import com.example.did_holder_app.util.Constants.DID_DOCUMENT_METHODE
 import com.example.did_holder_app.util.Constants.DID_DOCUMENT_PUBLIC_KEY_TYPE
-import com.example.did_holder_app.util.Constants.DID_DOCUMENT_SERVICE_ENDPOINT
-import com.example.did_holder_app.util.Constants.DID_DOCUMENT_SERVICE_TYPE
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
@@ -29,12 +27,16 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.bitcoinj.core.Base58
+import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters
+import org.bouncycastle.crypto.signers.Ed25519Signer
+import org.bouncycastle.jcajce.provider.asymmetric.edec.KeyFactorySpi
+import org.bouncycastle.util.encoders.Hex
 import retrofit2.Response
 import retrofit2.awaitResponse
 import timber.log.Timber
 import java.security.MessageDigest
+import java.security.spec.PKCS8EncodedKeySpec
 import java.time.Instant
-import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
@@ -51,6 +53,8 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
 
     val vc: Flow<VcResponseData?> = dataStore.vcFlow
 
+    val privateKey: Flow<String?> = dataStore.privateKeyFlow
+
     private fun hashKey(key: ByteArray): ByteArray {
         return MessageDigest.getInstance("SHA-256").digest(key)
     }
@@ -61,6 +65,11 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
 
 
         val keyPair = generateAndStoreEd25519KeyPair()
+
+        val privateKeyByte = keyPair.first.encoded
+        val privateKeyBase64 = Base64.encodeToString(privateKeyByte, Base64.DEFAULT)
+
+        Timber.d(privateKeyBase64)
 
         val publicKeyByte = keyPair.second.encoded
         val hashedPubKey = hashKey(publicKeyByte)
@@ -101,6 +110,7 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
             launch {
                 val didDocumentJson = didDocJsonAdapter.toJson(didDocument)
                 dataStore.saveDidDocument(didDocumentJson)
+                dataStore.savePrivateKey(privateKeyBase64)
             }
         }
     }
@@ -236,14 +246,37 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
             )
         )
 
+        val myVPtoJSon = vpJsonAdapter.toJson(myVP)
+
 
         // todo: vp 서명
+//        AndroidKeyStoreUtil.signVpWithPrivateKey(vp = myVPtoJSon.toString().toByteArray() )
+
+        val privateKey = dataStore.privateKeyFlow.first()
+        Timber.d("privateKey : ${privateKey}")
+
+        val privateKeyByte = Base64.decode(privateKey, Base64.DEFAULT)
+        Timber.d("privateKeyByte : $privateKeyByte")
+
+        try {
+            val acturalPrivateKey = Ed25519PrivateKeyParameters(privateKeyByte, 0)
+            // Sign data with private key
+            val signer = Ed25519Signer()
+            signer.init(true, acturalPrivateKey)
+            signer.update(myVP.toString().toByteArray(), 0, myVP.toString().toByteArray().size)
+            val signature = signer.generateSignature()
+            val signatureBase64 = Base64.encodeToString(signature, Base64.DEFAULT)
+            Timber.d("signature : $signatureBase64")
+        } catch (
+            e: Exception
+        ) {
+            e.printStackTrace()
+        }
+
 
         // todo: 서명 된 vp 생성
 
-        val vpJson = vpJsonAdapter.toJson(myVP)
 
-        Timber.d(vpJson)
     }
 
 }

@@ -8,27 +8,24 @@ import org.bouncycastle.crypto.generators.Ed25519KeyPairGenerator
 import org.bouncycastle.crypto.params.Ed25519KeyGenerationParameters
 import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters
 import org.bouncycastle.crypto.params.Ed25519PublicKeyParameters
+import timber.log.Timber
 import java.security.KeyStore
 import java.security.SecureRandom
 import javax.crypto.spec.SecretKeySpec
 
 
 object AndroidKeyStoreUtil {
+    private const val keyAlias = "did_key_alias"
+    private val keyStore: KeyStore = KeyStore.getInstance("AndroidKeyStore")
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun generateAndStoreEd25519KeyPair(): Pair<Ed25519PrivateKeyParameters, Ed25519PublicKeyParameters> {
 
-        val keyAlias = "did_key_alias"
-
-        // KeyStore 불러옴
-        val keyStore = KeyStore.getInstance("AndroidKeyStore")
         keyStore.load(null)
 
-        // KeyStore에 이미 키가 존재하는지 확인
-//        if (keyStore.containsAlias(keyAlias)) {
-//            throw Exception("KeyStore already contains key with alias $keyAlias")
-//        }
-
+        if (keyStore.containsAlias(keyAlias)) {
+            throw Exception("KeyStore already contains key with alias $keyAlias")
+        }
         val keyPairGenerator = Ed25519KeyPairGenerator()
 
         val random = SecureRandom()
@@ -43,6 +40,7 @@ object AndroidKeyStoreUtil {
 
         // 개인키를 byte로 변환
         val privateKeyEncoded = privateKey.encoded
+        Timber.d(privateKeyEncoded.toString())
 
         // KeyStore Entry 생성
         val keyEntry = KeyStore.SecretKeyEntry(
