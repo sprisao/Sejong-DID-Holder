@@ -8,6 +8,6 @@ import com.squareup.moshi.JsonClass
 data class Authentication(
     @Json(name = "publicKey")
     val publicKey: String,
-    @Json(name = "type")
-    val type: String
+//    @Json(name = "type")
+//    val type: String
 )
