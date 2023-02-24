@@ -6,16 +6,16 @@ import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
 data class VpProof(
-    @Json(name = "challenge")
-    val challenge: String,
-    @Json(name = "created")
-    val created: String,
-    @Json(name = "domain")
-    val domain: String,
-    @Json(name = "proofPurpose")
-    val proofPurpose: String,
-    @Json(name = "proofValue")
-    val proofValue: String,
     @Json(name = "type")
     val type: String,
+    @Json(name = "creator")
+    val creator: String,
+    @Json(name = "created")
+    val created: String,
+    @Json(name = "proofPurpose")
+    val proofPurpose: String,
+    @Json(name = "challenge")
+    val challenge: String,
+    @Json(name = "proofValue")
+    val proofValue: String,
 )
