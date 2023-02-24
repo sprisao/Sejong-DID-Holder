@@ -12,10 +12,10 @@ data class VcCredentialSubject(
     val position: String,
     @Json(name = "name")
     val name: String,
-    @Json(name = "phoneno")
-    val phoneno: String,
+//    @Json(name = "phoneno")
+//    val phoneno: String,
     @Json(name = "status")
     val status: String,
-    @Json(name = "password")
-    val password: String
+//    @Json(name = "password")
+//    val password: String
 )
