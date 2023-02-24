@@ -18,8 +18,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.ViewModel
 import androidx.navigation.NavController
 import com.example.did_holder_app.data.BarCodeAnalyser
+import com.example.did_holder_app.ui.viewmodel.DIDViewModel
 import com.example.did_holder_app.util.Constants.QR_RESULT_SCREEN_NAME
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionState
@@ -32,14 +34,14 @@ import java.util.concurrent.Executors
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun QRScreen(navController: NavController) {
+fun QRScreen(viewModel: DIDViewModel, navController: NavController) {
     val cameraPermissionState =
         rememberPermissionState(android.Manifest.permission.CAMERA)
 
     if (!cameraPermissionState.status.isGranted) {
         CheckCameraPermission(cameraPermissionState)
     } else {
-        ScanQRCode(navController)
+        ScanQRCode(viewModel, navController)
     }
 
 }
@@ -54,14 +56,14 @@ fun CheckCameraPermission(cameraPermissionState: PermissionState) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text("QR코드 스캔을 위해 카메라 권한이 필요합니다.")
-        Button(onClick = {cameraPermissionState.launchPermissionRequest()}) {
+        Button(onClick = { cameraPermissionState.launchPermissionRequest() }) {
             Text("권한 설정")
         }
     }
 }
 
 @Composable
-fun ScanQRCode(navController: NavController) {
+fun ScanQRCode(viewModel: ViewModel, navController: NavController) {
 
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -130,6 +132,7 @@ fun ScanQRCode(navController: NavController) {
 
 @Composable
 fun QRResultScreen(
+    viewModel: DIDViewModel,
     navController: NavController, qrResult: String
 ) {
     Column(
@@ -138,7 +141,12 @@ fun QRResultScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text("QR코드 스캔 결과:\n$qrResult", modifier = Modifier.align(Alignment.CenterHorizontally))
-        Button(onClick={/*todo*/}) {
+        Button(onClick = {
+            viewModel.generateVP(qrResult)
+        }) {
+            Text(text = "VP 생성")
+        }
+        Button(onClick = {/*todo*/ }) {
             Text("신원증명(VP제출)")
         }
     }

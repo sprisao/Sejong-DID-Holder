@@ -3,6 +3,7 @@ package com.example.did_holder_app.data.repository
 import com.example.did_holder_app.data.model.Blockchain.BlockchainResponse
 import com.example.did_holder_app.data.model.DIDDocument.DidDocument
 import com.example.did_holder_app.data.model.VC.*
+import org.bouncycastle.asn1.cmp.Challenge
 import retrofit2.Response
 
 interface DIDRepository {
@@ -25,6 +26,7 @@ interface DIDRepository {
     )
 
     suspend fun generateVP(
+        challenge: String,
     )
 }
 

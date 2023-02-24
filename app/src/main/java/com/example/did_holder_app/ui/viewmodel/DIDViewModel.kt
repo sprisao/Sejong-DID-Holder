@@ -96,9 +96,9 @@ class DIDViewModel(
 
 
     @RequiresApi(Build.VERSION_CODES.O)
-    fun generateVP() {
+    fun generateVP(challenge: String) {
         viewModelScope.launch {
-            didRepository.generateVP()
+            didRepository.generateVP(challenge)
         }
     }
 

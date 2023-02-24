@@ -129,10 +129,5 @@ fun WithDidScreen(
         }) {
             Text(text = "블록체인에 저장")
         }
-        Button(onClick = {
-            viewModel.generateVP()
-        }){
-            Text(text = "VP 생성")
-        }
     }
 }

@@ -221,16 +221,14 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
 
     // todo 서명하기 위한 vp model 생성
     @RequiresApi(Build.VERSION_CODES.O)
-    override suspend fun generateVP() {
+    override suspend fun generateVP(challenge : String) {
         val vc = dataStore.vcFlow.first()
         val didDocument = dataStore.didDocumentFlow.first()
         val did = didDocument?.id
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
         val now = Instant.now().atZone(ZoneId.of("UTC")).format(formatter)
 
-
         // proofvalue가 없는 vp 생성
-
         var myVP = VP(
             context = "https://www.w3.org/2018/credentials/v1",
             id = "https://example.appnet.com/SejongAccess/781ab991-ea34-4b3b-b76b-57a30d39ce14",
@@ -241,11 +239,10 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
                 creator = did.toString(),
                 created = now.toString(),
                 proofPurpose = "authentication",
-                challenge = "1234567890",
+                challenge = challenge,
                 proofValue = null
             )
         )
-
         val myVPtoJSon = vpJsonAdapter.toJson(myVP)
 
         // todo: vp 서명
@@ -273,7 +270,6 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
 
         val myVPtoJSon2 = vpJsonAdapter.toJson(myVP)
         Timber.d(myVPtoJSon2)
-
     }
 
 }

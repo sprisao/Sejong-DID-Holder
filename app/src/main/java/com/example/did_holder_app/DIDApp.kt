@@ -89,7 +89,7 @@ fun NavigationGraph(
             VCScreen(navController, viewModel)
         }
         composable(Constants.QR_SCREEN_NAME) {
-            QRScreen(navController)
+            QRScreen(viewModel, navController)
         }
         composable(Constants.SIGN_UP_SCREEN_NAME) {
             SignUpScreen(navController, viewModel)
@@ -97,7 +97,7 @@ fun NavigationGraph(
         composable("${Constants.QR_RESULT_SCREEN_NAME}/{qrResult}") {
             val qrResult = it.arguments?.getString("qrResult")
             if (qrResult != null) {
-                QRResultScreen(navController, qrResult)
+                QRResultScreen(viewModel, navController, qrResult)
             }
         }
     }
