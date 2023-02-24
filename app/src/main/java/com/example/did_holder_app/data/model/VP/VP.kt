@@ -8,13 +8,13 @@ import com.squareup.moshi.JsonClass
 @JsonClass(generateAdapter = true)
 data class VP(
     @Json(name = "@context")
-    val context: List<String>,
+    val context: String,
     @Json(name = "id")
     val id: String,
     @Json(name = "type")
     val type: List<String>,
     @Json(name = "verifiableCredential")
-    val verifiableCredential: List<VcResponseData>,
+    val verifiableCredential: List<VcResponseData?>,
     @Json(name = "proof")
     val vpProof: VpProof
 )

@@ -23,6 +23,9 @@ interface DIDRepository {
         request: VCRequest,
         result: (Response<VcResponse>) -> Unit,
     )
+
+    suspend fun generateVP(
+    )
 }
 
 

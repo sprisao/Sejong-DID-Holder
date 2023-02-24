@@ -13,6 +13,8 @@ import com.example.did_holder_app.data.model.DIDDocument.DidDocument
 import com.example.did_holder_app.data.model.DIDDocument.PublicKey
 import com.example.did_holder_app.data.model.DIDDocument.Service
 import com.example.did_holder_app.data.model.VC.*
+import com.example.did_holder_app.data.model.VP.VP
+import com.example.did_holder_app.data.model.VP.VpProof
 import com.example.did_holder_app.util.Constants.DID_DOCUMENT_AUTHENTICATION_TYPE
 import com.example.did_holder_app.util.Constants.DID_DOCUMENT_CONTEXT
 import com.example.did_holder_app.util.Constants.DID_DOCUMENT_METHODE
@@ -23,11 +25,18 @@ import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.bitcoinj.core.Base58
 import retrofit2.Response
 import retrofit2.awaitResponse
+import timber.log.Timber
 import java.security.MessageDigest
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
 
@@ -36,7 +45,11 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
         .build()
 
     private val didDocJsonAdapter: JsonAdapter<DidDocument> = moshi.adapter(DidDocument::class.java)
-    private val vcResponseDataJsonAdapter: JsonAdapter<VcResponseData> = moshi.adapter(VcResponseData::class.java)
+    private val vcResponseDataJsonAdapter: JsonAdapter<VcResponseData> =
+        moshi.adapter(VcResponseData::class.java)
+    private val vpJsonAdapter: JsonAdapter<VP> = moshi.adapter(VP::class.java)
+
+    val vc: Flow<VcResponseData?> = dataStore.vcFlow
 
     private fun hashKey(key: ByteArray): ByteArray {
         return MessageDigest.getInstance("SHA-256").digest(key)
@@ -149,7 +162,8 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
                     // DataStore에 VC 저장
                     try {
                         response.body().let {
-                            val vcResponseData = vcResponseDataJsonAdapter.toJson(it?.vcResponseData)
+                            val vcResponseData =
+                                vcResponseDataJsonAdapter.toJson(it?.vcResponseData)
                             vcResponseData?.let { data ->
                                 dataStore.saveVc(data)
                             }
@@ -194,5 +208,42 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
         }
     }
 
+
+    // todo 서명하기 위한 vp model 생성
+    @RequiresApi(Build.VERSION_CODES.O)
+    override suspend fun generateVP() {
+        val vc = dataStore.vcFlow.first()
+        val didDocument = dataStore.didDocumentFlow.first()
+        val did = didDocument?.id
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
+        val now = Instant.now().atZone(ZoneId.of("UTC")).format(formatter)
+
+
+        // proofvalue가 없는 vp 생성
+
+        var myVP = VP(
+            context = "https://www.w3.org/2018/credentials/v1",
+            id = "https://example.appnet.com/SejongAccess/781ab991-ea34-4b3b-b76b-57a30d39ce14",
+            type = listOf("VerifiablePresentation", "SejongAccessPresentation"),
+            verifiableCredential = listOf(vc),
+            vpProof = VpProof(
+                type = "Ed25519Signature2018",
+                creator = did.toString(),
+                created = now.toString(),
+                proofPurpose = "authentication",
+                challenge = "1234567890",
+                proofValue = null
+            )
+        )
+
+
+        // todo: vp 서명
+
+        // todo: 서명 된 vp 생성
+
+        val vpJson = vpJsonAdapter.toJson(myVP)
+
+        Timber.d(vpJson)
+    }
 
 }

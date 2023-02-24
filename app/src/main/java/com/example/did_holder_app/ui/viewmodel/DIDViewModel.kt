@@ -1,5 +1,7 @@
 package com.example.did_holder_app.ui.viewmodel
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.did_holder_app.data.repository.DIDRepositoryImpl
@@ -23,6 +25,7 @@ class DIDViewModel(
     val userSeq: Flow<Int?> = dataStore.userSeqFlow
 
     // DID Document 생성
+    @RequiresApi(Build.VERSION_CODES.O)
     fun generateDidDocument() = viewModelScope.launch(Dispatchers.IO) {
         try {
             didRepository.generateDidDocument()
@@ -91,6 +94,13 @@ class DIDViewModel(
     }
 
 
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun generateVP() {
+        viewModelScope.launch {
+            didRepository.generateVP()
+        }
+    }
 
 }
 

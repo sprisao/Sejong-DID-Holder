@@ -1,6 +1,8 @@
 package com.example.did_holder_app.ui
 
+import android.os.Build
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,6 +21,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun DIDScreen(viewModel: DIDViewModel) {
     val scope = rememberCoroutineScope()
@@ -32,6 +35,7 @@ fun DIDScreen(viewModel: DIDViewModel) {
     DIDScreenState(viewModel, scope, state)
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun DIDScreenState(
     viewModel: DIDViewModel,
@@ -49,6 +53,7 @@ sealed class DIDState {
     data class Existing(val didDocument: DidDocument) : DIDState()
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun EmptyDidScreen(viewModel: DIDViewModel) {
     Column(
@@ -70,6 +75,7 @@ fun EmptyDidScreen(viewModel: DIDViewModel) {
 }
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun WithDidScreen(
     viewModel: DIDViewModel,
@@ -122,6 +128,11 @@ fun WithDidScreen(
             }
         }) {
             Text(text = "블록체인에 저장")
+        }
+        Button(onClick = {
+            viewModel.generateVP()
+        }){
+            Text(text = "VP 생성")
         }
     }
 }
