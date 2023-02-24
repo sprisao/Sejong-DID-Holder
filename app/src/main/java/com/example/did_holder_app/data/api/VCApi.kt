@@ -13,6 +13,7 @@ interface VCApi {
     fun requestVC(@Body request: VCRequest): Call<VcResponse>
 
     @POST("/v1/member")
+
     fun signUp(@Body request: SignUpRequest): Call<SignUpResponse>
 
     @POST("/v1/member/login")

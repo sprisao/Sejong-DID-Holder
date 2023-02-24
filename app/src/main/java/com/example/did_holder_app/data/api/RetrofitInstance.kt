@@ -72,9 +72,20 @@ object RetrofitInstance {
             ).hostnameVerifier(trustAllHosts).build()
         ).build()
 
+    private val retrfit_vp = Retrofit.Builder()
+        .baseUrl(RELAY_SERVER_URL)
+        .addConverterFactory(MoshiConverterFactory.create(moshi)).client(
+            OkHttpClient.Builder().addInterceptor(httpLoggingInterceptor).sslSocketFactory(
+                sslContext.socketFactory,
+                trustAllCerts
+            ).hostnameVerifier(trustAllHosts).build()
+        ).build()
+
     //Api
     val blockchainApi: BlockchainApi =
         retrofit_blockchain.create(BlockchainApi::class.java)
 
     val vcServerApi: VCApi = retrofit_vc.create(VCApi::class.java)
+
+    val vpServerApi: VPApi = retrfit_vp.create(VPApi::class.java)
 }

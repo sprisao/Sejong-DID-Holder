@@ -3,8 +3,12 @@ package com.example.did_holder_app.data.repository
 import android.os.Build
 import android.util.Base64
 import androidx.annotation.RequiresApi
+import com.example.did_holder_app.data.api.RetrofitInstance
 import com.example.did_holder_app.data.api.RetrofitInstance.blockchainApi
 import com.example.did_holder_app.data.api.RetrofitInstance.vcServerApi
+import com.example.did_holder_app.data.api.RetrofitInstance.vpServerApi
+import com.example.did_holder_app.data.api.VpRequest
+import com.example.did_holder_app.data.api.VpResponse
 import com.example.did_holder_app.data.datastore.DidDataStore
 import com.example.did_holder_app.data.keystore.AndroidKeyStoreUtil
 import com.example.did_holder_app.data.keystore.AndroidKeyStoreUtil.generateAndStoreEd25519KeyPair
@@ -52,8 +56,6 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
     private val vpJsonAdapter: JsonAdapter<VP> = moshi.adapter(VP::class.java)
 
     val vc: Flow<VcResponseData?> = dataStore.vcFlow
-
-    val privateKey: Flow<String?> = dataStore.privateKeyFlow
 
     private fun hashKey(key: ByteArray): ByteArray {
         return MessageDigest.getInstance("SHA-256").digest(key)
@@ -221,7 +223,7 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
 
     // todo 서명하기 위한 vp model 생성
     @RequiresApi(Build.VERSION_CODES.O)
-    override suspend fun generateVP(challenge : String) {
+    override suspend fun generateVP(challenge: String) {
         val vc = dataStore.vcFlow.first()
         val didDocument = dataStore.didDocumentFlow.first()
         val did = didDocument?.id
@@ -270,6 +272,33 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
 
         val myVPtoJSon2 = vpJsonAdapter.toJson(myVP)
         Timber.d(myVPtoJSon2)
+        dataStore.saveVp(myVPtoJSon2.toString())
+    }
+
+    override suspend fun verifyVP(result: (Response<VpResponse>) -> Unit) {
+
+        val thisVp = dataStore.vpFlow.first()
+        /*convert thisVP to Json*/
+        val didDocument = dataStore.didDocumentFlow.first()
+
+        val did = didDocument?.id
+
+        try {
+            val call = vpServerApi.sendVP(
+                VpRequest(
+                    did.toString(),
+                    thisVp.toString()
+                )
+            )
+            val response = call.awaitResponse()
+            if (response.isSuccessful) {
+                result(response)
+            } else {
+                result(response)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
 }

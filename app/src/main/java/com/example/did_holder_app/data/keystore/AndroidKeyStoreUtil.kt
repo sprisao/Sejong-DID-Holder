@@ -23,9 +23,9 @@ object AndroidKeyStoreUtil {
 
         keyStore.load(null)
 
-        if (keyStore.containsAlias(keyAlias)) {
-            throw Exception("KeyStore already contains key with alias $keyAlias")
-        }
+//        if (keyStore.containsAlias(keyAlias)) {
+//            throw Exception("KeyStore already contains key with alias $keyAlias")
+//        }
         val keyPairGenerator = Ed25519KeyPairGenerator()
 
         val random = SecureRandom()

@@ -4,6 +4,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.did_holder_app.data.api.VpResponse
 import com.example.did_holder_app.data.repository.DIDRepositoryImpl
 import com.example.did_holder_app.data.datastore.DidDataStore
 import com.example.did_holder_app.data.model.Blockchain.BlockchainResponse
@@ -99,6 +100,12 @@ class DIDViewModel(
     fun generateVP(challenge: String) {
         viewModelScope.launch {
             didRepository.generateVP(challenge)
+        }
+    }
+
+    fun verifyVP(result: (Response<VpResponse>) -> Unit) {
+        viewModelScope.launch {
+            didRepository.verifyVP(result)
         }
     }
 

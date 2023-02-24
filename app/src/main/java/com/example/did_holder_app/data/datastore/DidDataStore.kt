@@ -33,7 +33,23 @@ class DidDataStore(context: Context) {
         val VC = stringPreferencesKey("vc")
         val USERSEQ = stringPreferencesKey("userseq")
         val PRIVATE_KEY = stringPreferencesKey("private_key")
+        val VP = stringPreferencesKey("vp")
     }
+    val vpFlow: Flow<String?> = context.dataStore.data.map {
+        it[Key.VP]
+    }
+
+    suspend fun saveVp(vp: String) {
+        dataStore.edit {
+            it[Key.VP] = vp
+        }
+    }
+    suspend fun clearVp() {
+        dataStore.edit {
+            it.remove(Key.VP)
+        }
+    }
+
 
     val privateKeyFlow: Flow<String?> = context.dataStore.data.map {
         it[Key.PRIVATE_KEY]

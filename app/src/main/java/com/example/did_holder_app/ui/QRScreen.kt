@@ -1,6 +1,10 @@
 package com.example.did_holder_app.ui
 
+import android.content.Context
+import android.os.Build
 import android.view.ViewGroup
+import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
@@ -130,10 +134,12 @@ fun ScanQRCode(viewModel: ViewModel, navController: NavController) {
     )
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun QRResultScreen(
     viewModel: DIDViewModel,
-    navController: NavController, qrResult: String
+    navController: NavController, qrResult: String,
+    context: Context
 ) {
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -146,11 +152,22 @@ fun QRResultScreen(
         }) {
             Text(text = "VP 생성")
         }
-        Button(onClick = {/*todo*/ }) {
+        Button(onClick = {
+            viewModel.verifyVP {
+                if (it.isSuccessful) {
+                    Timber.d("VP 검증 성공")
+                    if (it.body()?.code == 0) {
+                        Toast.makeText(context, "VP 검증 성공", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(context, "VP 검증 실패", Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    Timber.d("VP 검증 실패")
+                    Toast.makeText(context, "VP 검증 실패", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }) {
             Text("신원증명(VP제출)")
         }
     }
-//    Button(onClick = {navController.popBackStack()}) {
-//        Text("돌아가기")
-//    }
 }

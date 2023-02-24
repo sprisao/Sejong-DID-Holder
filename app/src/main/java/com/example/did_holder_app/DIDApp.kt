@@ -1,5 +1,8 @@
 package com.example.did_holder_app
 
+import android.content.Context
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -60,6 +63,7 @@ fun DIDTopBar() {
     )
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun DidApp() {
     val context = LocalContext.current
@@ -72,14 +76,16 @@ fun DidApp() {
         bottomBar = { DIDBottomNav(navController = navController) },
         topBar = { DIDTopBar() }) {
         Box(Modifier.padding(it))
-        NavigationGraph(navController = navController, viewModel = viewModel)
+        NavigationGraph(navController = navController, viewModel = viewModel, context)
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun NavigationGraph(
     navController: NavHostController,
-    viewModel: DIDViewModel
+    viewModel: DIDViewModel,
+context: Context
 ) {
     NavHost(navController = navController, startDestination = Constants.DID_SCREEN_NAME) {
         composable(Constants.DID_SCREEN_NAME) {
@@ -97,7 +103,7 @@ fun NavigationGraph(
         composable("${Constants.QR_RESULT_SCREEN_NAME}/{qrResult}") {
             val qrResult = it.arguments?.getString("qrResult")
             if (qrResult != null) {
-                QRResultScreen(viewModel, navController, qrResult)
+                QRResultScreen(viewModel, navController, qrResult, context =context)
             }
         }
     }
