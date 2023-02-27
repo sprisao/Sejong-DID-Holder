@@ -3,6 +3,7 @@ package com.example.did_holder_app
 import android.content.Context
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,6 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -52,12 +54,20 @@ sealed class BottomNavItem(val screenRoute: String, val title: Int, val icon: In
 @Composable
 fun DIDTopBar() {
     androidx.compose.material.TopAppBar(
+        backgroundColor = Color.White,
         title = {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = "세종텔레콤 출입시스템")
+                Image(
+                    painter = painterResource(id = R.drawable.sejong_splash),
+                    contentDescription = "DID Logo",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp)
+                )
+//                Text(text = "세종텔레콤 DID출입시스템",  color = Color.White)
             }
         },
     )

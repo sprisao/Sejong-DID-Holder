@@ -69,19 +69,19 @@ fun SetupAppNavigation(
 @Composable
 fun SplashScreen(navController: NavHostController) {
     LocalContext.current
-    val scale = remember {
-        Animatable(0f)
-    }
+//    val scale = remember {
+//        Animatable(0f)
+//    }
 
     LaunchedEffect(key1 = true, block = {
-        scale.animateTo(
-            targetValue = 3f,
-            animationSpec = tween(
-                durationMillis = 1000,
-                delayMillis = 1000
-            )
-        )
-        delay(500L)
+//        scale.animateTo(
+//            targetValue = 3f,
+//            animationSpec = tween(
+//                durationMillis = 1000,
+//                delayMillis = 1000
+//            )
+//        )
+        delay(1000L)
         navController.popBackStack()
         navController.navigate(Screens.MainScreen.name)
     })
@@ -100,8 +100,9 @@ fun SplashScreen(navController: NavHostController) {
                 painter = painterResource(id = R.drawable.sejong_splash),
                 contentDescription = "Logo",
                 modifier = Modifier
-                    .size(100.dp)
-                    .scale(scale.value)
+                    .fillMaxSize()
+//                    .scale(scale.value)
+                    .padding(16.dp)
             )
         }
     }
