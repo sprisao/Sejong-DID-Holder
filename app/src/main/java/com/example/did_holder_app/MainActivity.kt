@@ -7,6 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -14,7 +15,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -73,8 +77,8 @@ fun SplashScreen(navController: NavHostController) {
         scale.animateTo(
             targetValue = 3f,
             animationSpec = tween(
-                durationMillis = 500,
-                delayMillis = 500
+                durationMillis = 1000,
+                delayMillis = 1000
             )
         )
         delay(500L)
@@ -92,7 +96,13 @@ fun SplashScreen(navController: NavHostController) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            /*Add Image*/
+            Image(
+                painter = painterResource(id = R.drawable.sejong_splash),
+                contentDescription = "Logo",
+                modifier = Modifier
+                    .size(100.dp)
+                    .scale(scale.value)
+            )
         }
     }
 }
