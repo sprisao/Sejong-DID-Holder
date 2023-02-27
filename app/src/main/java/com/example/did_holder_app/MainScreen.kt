@@ -65,7 +65,7 @@ fun DIDTopBar() {
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun DidApp() {
+fun MainScreen() {
     val context = LocalContext.current
     val dataStore = DidDataStore(context)
     val viewModel = remember { DIDViewModel(DIDRepositoryImpl(dataStore), dataStore) }
