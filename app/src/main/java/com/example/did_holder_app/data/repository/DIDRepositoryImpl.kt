@@ -3,14 +3,12 @@ package com.example.did_holder_app.data.repository
 import android.os.Build
 import android.util.Base64
 import androidx.annotation.RequiresApi
-import com.example.did_holder_app.data.api.RetrofitInstance
 import com.example.did_holder_app.data.api.RetrofitInstance.blockchainApi
 import com.example.did_holder_app.data.api.RetrofitInstance.vcServerApi
 import com.example.did_holder_app.data.api.RetrofitInstance.vpServerApi
 import com.example.did_holder_app.data.api.VpRequest
 import com.example.did_holder_app.data.api.VpResponse
 import com.example.did_holder_app.data.datastore.DidDataStore
-import com.example.did_holder_app.data.keystore.AndroidKeyStoreUtil
 import com.example.did_holder_app.data.keystore.AndroidKeyStoreUtil.generateAndStoreEd25519KeyPair
 import com.example.did_holder_app.data.model.Blockchain.BlockChainRequest
 import com.example.did_holder_app.data.model.Blockchain.BlockchainResponse
@@ -31,15 +29,21 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.bitcoinj.core.Base58
+import org.bouncycastle.crypto.digests.SHA512Digest
 import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters
+import org.bouncycastle.crypto.params.Ed25519PublicKeyParameters
 import org.bouncycastle.crypto.signers.Ed25519Signer
-import org.bouncycastle.jcajce.provider.asymmetric.edec.KeyFactorySpi
+import org.bouncycastle.jcajce.interfaces.EdDSAPrivateKey
+import org.bouncycastle.jce.provider.BouncyCastleProvider
+import org.bouncycastle.math.ec.rfc8032.Ed25519
 import org.bouncycastle.util.encoders.Hex
 import retrofit2.Response
 import retrofit2.awaitResponse
 import timber.log.Timber
 import java.security.MessageDigest
-import java.security.spec.PKCS8EncodedKeySpec
+import java.security.Security
+import java.security.Signature
+import java.security.interfaces.EdECKey
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -113,6 +117,7 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
                 val didDocumentJson = didDocJsonAdapter.toJson(didDocument)
                 dataStore.saveDidDocument(didDocumentJson)
                 dataStore.savePrivateKey(privateKeyBase64)
+//                dataStore.savePublicKey(publicKeyBase58)
             }
         }
     }
@@ -245,27 +250,40 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
                 proofValue = null
             )
         )
-        val myVPtoJSon = vpJsonAdapter.toJson(myVP)
 
-        // todo: vp 서명
+        // ProofValue를 제외한 VP를 Json으로 변환
+        val vpWithoutProofValue = vpJsonAdapter.toJson(myVP)
+
+        // PrivateKey를 가져옴
         val privateKey = dataStore.privateKeyFlow.first()
         Timber.d("privateKey : ${privateKey}")
 
+        // PrivateKey를 Base64로 디코딩
         val privateKeyByte = Base64.decode(privateKey, Base64.DEFAULT)
         Timber.d("privateKeyByte : ${Hex.toHexString(privateKeyByte)}")
 
+        // PrivateKey를 Ed25519PrivateKeyParameters로 변환
         val acturalPrivateKey = Ed25519PrivateKeyParameters(privateKeyByte, 0)
-        // Sign data with private key
+
+        // PrivateKey로 데이터 서명
         val signer = Ed25519Signer()
         signer.init(true, acturalPrivateKey)
+
+        // Json데이터를 String으로 변환후 ByteArray로 변환 -> Hashing
+        val hashedVpWithoutProofValue = hashKey(vpWithoutProofValue.toString().toByteArray())
+
         signer.update(
-            myVPtoJSon.toString().toByteArray(),
+            hashedVpWithoutProofValue,
             0,
-            myVPtoJSon.toString().toByteArray().size
+            /* Size : String의 ByteArray값의 사이즈로 책정*/
+            hashedVpWithoutProofValue.size
         )
+
+        // 서명
         val signature = signer.generateSignature()
-        val signatureBase64 = Base64.encodeToString(signature, Base64.DEFAULT)
-        Timber.d("signature : $signatureBase64")
+
+        // 서명을 Base64로 인코딩
+        val signatureBase64 = Base64.encodeToString(signature, Base64.NO_WRAP or Base64.NO_PADDING)
 
         // todo: 서명 된 vp 생성
         myVP.vpProof.proofValue = signatureBase64
