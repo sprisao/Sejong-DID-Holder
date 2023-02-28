@@ -18,11 +18,16 @@ data class VcResponseData(
     val issuer: String,
     @Json(name = "issuanceDate")
     val issuanceDate: String,
-    @Json(name = "expirationDate")
-    val expirationDate: String,
+//    @Json(name = "expirationDate")
+//    val expirationDate: String?,
+    @Json(name = "validFrom")
+    val validFrom: String?,
+    @Json(name = "validUntil")
+    val validUntil: String?,
     @Json(name = "proof")
     val vcProof: VcProof,
 ) {
+
     constructor() : this(
         listOf(),
         "",
@@ -31,7 +36,6 @@ data class VcResponseData(
         "",
         "",
         "",
-        VcProof()
-    )
-
+        "",
+        VcProof())
 }
