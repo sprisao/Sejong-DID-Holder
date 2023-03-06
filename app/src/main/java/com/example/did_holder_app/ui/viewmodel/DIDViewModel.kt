@@ -11,6 +11,7 @@ import com.example.did_holder_app.data.model.Blockchain.BlockchainResponse
 import com.example.did_holder_app.data.model.DIDDocument.DidDocument
 import com.example.did_holder_app.data.model.VC.*
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import retrofit2.Response
@@ -27,12 +28,14 @@ class DIDViewModel(
 
     // DID Document 생성
     @RequiresApi(Build.VERSION_CODES.O)
-    fun generateDidDocument() = viewModelScope.launch(Dispatchers.IO) {
+    fun generateDidDocument(onComplete: () -> Unit) = viewModelScope.launch(Dispatchers.IO) {
+            delay(3500)
         try {
             didRepository.generateDidDocument()
         } catch (e: Exception) {
             Timber.e(e)
         }
+        onComplete()
     }
 
     // Blockchain에 DID Document를 저장

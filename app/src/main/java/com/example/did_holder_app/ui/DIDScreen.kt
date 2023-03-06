@@ -6,7 +6,6 @@ import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -21,15 +20,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.did_holder_app.R
 import com.example.did_holder_app.data.model.DIDDocument.DidDocument
 import com.example.did_holder_app.ui.viewmodel.DIDViewModel
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import timber.log.Timber
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -66,6 +65,39 @@ sealed class DIDState {
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun EmptyDidScreen(viewModel: DIDViewModel) {
+    var isLoading by remember {
+        mutableStateOf(false)
+    }
+
+    var scope = rememberCoroutineScope()
+
+    if (isLoading) {
+        LoadingScreen(message = "DID 생성 중입니다.")
+    } else {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Button(
+                onClick = {
+                    isLoading = true
+                    viewModel.generateDidDocument{
+                        isLoading = false
+                    }
+                },
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text(text = "DID 생성")
+            }
+        }
+    }
+}
+
+@Composable
+fun LoadingScreen(message: String) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -73,14 +105,8 @@ fun EmptyDidScreen(viewModel: DIDViewModel) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Button(
-            onClick = {
-                viewModel.generateDidDocument()
-            },
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Text(text = "DID 생성")
-        }
+        CircularProgressIndicator()
+        Text(text = message)
     }
 }
 
@@ -111,92 +137,93 @@ fun WithDidScreen(
                 .fillMaxWidth(1f)
                 .aspectRatio(0.6f),
             front = {
-                    Column(
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    verticalArrangement = Arrangement.Top,
+
+                    ) {
+                    Box(
                         modifier = Modifier
-                            .fillMaxSize(),
-                        verticalArrangement = Arrangement.Top,
-
-                        ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth(1f)
-                                .fillMaxHeight(0.7f)
-                                .background(Color.Red),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Column(
-                                modifier = Modifier
-                                    .padding(bottom = 10.dp)
-                                    .fillMaxHeight(1f)
-                                    .fillMaxWidth(1f)
-                                ,
-                                verticalArrangement = Arrangement.Bottom,
-                            ) {
-                                Box(
-                                   modifier = Modifier
-                                       .fillMaxWidth(1f)
-                                       .fillMaxHeight(0.7f),
-                                    contentAlignment = Alignment.Center
-
-                                ){
-                                    Image(
-                                        modifier = Modifier
-                                            .fillMaxWidth(0.4f)
-                                            .fillMaxHeight(0.4f),
-                                        painter = painterResource(id = R.drawable.sejong_ci),
-                                        contentDescription = "did holder app logo"
-                                    )
-                                }
-                                Text(
-                                    modifier = Modifier.padding(horizontal = 14.dp),
-                                    text = "SEJONG DID",
-                                    style = TextStyle(
-                                        color = Color.White,
-                                        fontSize = 30.sp,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                )
-                                Text(
-                                    modifier = Modifier.padding(horizontal = 14.dp),
-                                    text = "자기주권신원인증 시스템",
-                                    style = TextStyle(
-                                        color = Color.White,
-                                        fontSize = 20.sp,
-                                        fontWeight = FontWeight.Normal
-                                    )
-                                )
-                            }
-                        }
+                            .fillMaxWidth(1f)
+                            .fillMaxHeight(0.7f)
+                            .background(Color.Red),
+                        contentAlignment = Alignment.Center,
+                    ) {
                         Column(
                             modifier = Modifier
-                                .padding(14.dp)
-                                .fillMaxWidth(1f)
-                                .fillMaxHeight(1f),
-                            verticalArrangement = Arrangement.SpaceBetween,
+                                .padding(bottom = 10.dp)
+                                .fillMaxHeight(1f)
+                                .fillMaxWidth(1f),
+                            verticalArrangement = Arrangement.Bottom,
                         ) {
-                            Column() {
-                                Text("나의 DID", style = TextStyle(
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth(1f)
+                                    .fillMaxHeight(0.7f),
+                                contentAlignment = Alignment.Center
+
+                            ) {
+                                Image(
+                                    modifier = Modifier
+                                        .fillMaxWidth(0.4f)
+                                        .fillMaxHeight(0.4f),
+                                    painter = painterResource(id = R.drawable.sejong_ci),
+                                    contentDescription = "did holder app logo"
+                                )
+                            }
+                            Text(
+                                modifier = Modifier.padding(horizontal = 14.dp),
+                                text = "SEJONG DID",
+                                style = TextStyle(
+                                    color = Color.White,
+                                    fontSize = 30.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            )
+                            Text(
+                                modifier = Modifier.padding(horizontal = 14.dp),
+                                text = "자기주권신원인증 시스템",
+                                style = TextStyle(
+                                    color = Color.White,
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.Normal
+                                )
+                            )
+                        }
+                    }
+                    Column(
+                        modifier = Modifier
+                            .padding(14.dp)
+                            .fillMaxWidth(1f)
+                            .fillMaxHeight(1f),
+                        verticalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Column() {
+                            Text(
+                                "나의 DID", style = TextStyle(
                                     color = Color.Black,
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     letterSpacing = 0.sp
-                                ))
-                                Text(
-                                    text = didDocument.id,
-                                    style = TextStyle(
-                                        color = Color.Black,
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                    )
                                 )
-                            }
-                            Button(
-                                modifier = Modifier.fillMaxWidth(1f),
-                                colors = ButtonDefaults.buttonColors(
-                                    contentColor = Color.White
-                                ),
-                                shape = RoundedCornerShape(10.dp),
-                                onClick = {
+                            )
+                            Text(
+                                text = didDocument.id,
+                                style = TextStyle(
+                                    color = Color.Black,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                            )
+                        }
+                        Button(
+                            modifier = Modifier.fillMaxWidth(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                contentColor = Color.White
+                            ),
+                            shape = RoundedCornerShape(10.dp),
+                            onClick = {
                                 viewModel.saveDidDocumentToBlockchain(didDocument) {
                                     if (it.isSuccessful) {
                                         if (it.body()?.code == 0) {
@@ -221,11 +248,11 @@ fun WithDidScreen(
                                     }
                                 }
                             }) {
-                                Text(text = "블록체인에 저장")
-                            }
-
+                            Text(text = "블록체인에 저장")
                         }
+
                     }
+                }
             },
             back = {
                 Box(
