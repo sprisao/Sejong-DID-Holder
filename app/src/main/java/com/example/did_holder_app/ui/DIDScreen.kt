@@ -1,5 +1,6 @@
 package com.example.did_holder_app.ui
 
+import android.graphics.Color.rgb
 import android.os.Build
 import android.widget.Toast
 import androidx.annotation.RequiresApi
@@ -9,6 +10,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.magnifier
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -17,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -214,12 +217,6 @@ fun WithDidScreen(
                                         letterSpacing = 0.sp
                                     )
                                 )
-                                Icon(
-                                    modifier = Modifier.padding(end = 10.dp),
-                                    painter = painterResource(id = R.drawable.baseline_security_24),
-                                    contentDescription = "did holder app logo",
-                                    tint = Color.Gray
-                                )
                             }
                             Text(
                                 text = didDocument.id,
@@ -233,14 +230,27 @@ fun WithDidScreen(
                         if(
                             resultIsDidSaved!!
                         ){
-                            Text(
-                                text = "블록체인에 저장되었습니다.",
-                                style = TextStyle(
-                                    color = Color.Green,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.SemiBold,
+                            Row(
+                                modifier = Modifier.fillMaxWidth(1f),
+                                horizontalArrangement = Arrangement.Start,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    modifier = Modifier.padding(end = 10.dp).width(25.dp).height(25.dp),
+                                    painter = painterResource(id = R.drawable.baseline_security_24),
+                                    contentDescription = "did holder app logo",
+                                    tint =Color(rgb(83, 145, 101))
                                 )
-                            )
+                                Text(
+                                    text = "블록체인에 안전하게 등록 되었습니다.",
+                                    style = TextStyle(
+                                        color = Color(rgb(83, 145, 101)),
+                                        fontSize =14.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        letterSpacing = 0.sp
+                                    )
+                                )
+                            }
                         } else {
                             Button(
                                 modifier = Modifier.fillMaxWidth(1f),
