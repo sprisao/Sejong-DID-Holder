@@ -20,14 +20,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.did_holder_app.R
 import com.example.did_holder_app.data.model.DIDDocument.DidDocument
 import com.example.did_holder_app.ui.viewmodel.DIDViewModel
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -84,7 +82,7 @@ fun EmptyDidScreen(viewModel: DIDViewModel) {
             Button(
                 onClick = {
                     isLoading = true
-                    viewModel.generateDidDocument{
+                    viewModel.generateDidDocument {
                         isLoading = false
                     }
                 },
@@ -126,7 +124,7 @@ fun WithDidScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(26.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top
     ) {
@@ -200,14 +198,27 @@ fun WithDidScreen(
                         verticalArrangement = Arrangement.SpaceBetween,
                     ) {
                         Column() {
-                            Text(
-                                "나의 DID", style = TextStyle(
-                                    color = Color.Black,
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    letterSpacing = 0.sp
+                            Row(
+                                modifier = Modifier.fillMaxWidth(1f),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.Bottom
+
+                            ) {
+                                Text(
+                                    "나의 DID", style = TextStyle(
+                                        color = Color.Black,
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        letterSpacing = 0.sp
+                                    )
                                 )
-                            )
+                                Icon(
+                                    modifier = Modifier.padding(end = 10.dp),
+                                    painter = painterResource(id = R.drawable.baseline_security_24),
+                                    contentDescription = "did holder app logo",
+                                    tint = Color.Gray
+                                )
+                            }
                             Text(
                                 text = didDocument.id,
                                 style = TextStyle(
