@@ -120,6 +120,8 @@ fun WithDidScreen(
     var cardFace by remember {
         mutableStateOf(CardFace.Front)
     }
+    val isDidSaved  = viewModel.isDidSaved.collectAsState(initial = false)
+    val resultIsDidSaved = isDidSaved.value
 
     Column(
         modifier = Modifier
@@ -228,21 +230,41 @@ fun WithDidScreen(
                                 )
                             )
                         }
-                        Button(
-                            modifier = Modifier.fillMaxWidth(1f),
-                            colors = ButtonDefaults.buttonColors(
-                                contentColor = Color.White
-                            ),
-                            shape = RoundedCornerShape(10.dp),
-                            onClick = {
-                                viewModel.saveDidDocumentToBlockchain(didDocument) {
-                                    if (it.isSuccessful) {
-                                        if (it.body()?.code == 0) {
-                                            Toast.makeText(
-                                                context,
-                                                "블록체인에 저장되었습니다.",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
+                        if(
+                            resultIsDidSaved!!
+                        ){
+                            Text(
+                                text = "블록체인에 저장되었습니다.",
+                                style = TextStyle(
+                                    color = Color.Green,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                            )
+                        } else {
+                            Button(
+                                modifier = Modifier.fillMaxWidth(1f),
+                                colors = ButtonDefaults.buttonColors(
+                                    contentColor = Color.White
+                                ),
+                                shape = RoundedCornerShape(10.dp),
+                                onClick = {
+                                    viewModel.saveDidDocumentToBlockchain(didDocument) {
+                                        if (it.isSuccessful) {
+                                            if (it.body()?.code == 0) {
+                                                Toast.makeText(
+                                                    context,
+                                                    "DID가 블록체인에 저장되었습니다.",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                                viewModel.saveIsDidSaved(true)
+                                            } else {
+                                                Toast.makeText(
+                                                    context,
+                                                    "실패 : ${it.body()?.msg}",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
                                         } else {
                                             Toast.makeText(
                                                 context,
@@ -250,41 +272,82 @@ fun WithDidScreen(
                                                 Toast.LENGTH_SHORT
                                             ).show()
                                         }
-                                    } else {
-                                        Toast.makeText(
-                                            context,
-                                            "실패 : ${it.body()?.msg}",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
                                     }
-                                }
-                            }) {
-                            Text(text = "블록체인에 저장")
+                                }) {
+                                Text(text = "블록체인에 저장")
+                            }
                         }
 
                     }
                 }
             },
             back = {
-                Box(
+                Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color.Red),
-                    contentAlignment = Alignment.Center,
+                        .padding(14.dp),
+                    verticalArrangement = Arrangement.SpaceBetween,
+
                 ) {
-                    Text(
-                        text = "back",
-                        style = MaterialTheme.typography.headlineMedium,
-                    )
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(Color.White),
-                    )
+                    Column {
+                        Text(
+                            "나의 DID 정보", style = TextStyle(
+                                color = Color.Black,
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.sp
+                            )
+                        )
+                        Spacer(
+                            modifier = Modifier
+                                .fillMaxWidth(1f)
+                                .height(10.dp)
+                        )
+                        Text(
+                            "DID",
+                            style = TextStyle(
+                                color = Color.Black,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                letterSpacing = 0.sp
+                            )
+                        )
+                        Text(
+                            text = didDocument.id,
+                            style = TextStyle(
+                                color = Color.Black,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                        )
+                        Text(
+                            text = "Document",
+                            style = TextStyle(
+                                color = Color.Black,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                letterSpacing = 0.sp
+                            )
+                        )
+                        Text(
+                            text = didDocument.toString(),
+                            style = TextStyle(
+                                color = Color.Black,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                        )
+                    }
                     Button(
+                        modifier = Modifier.fillMaxWidth(1f),
+                        colors = ButtonDefaults.buttonColors(
+                            contentColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(10.dp),
                         onClick = {
                             scope.launch {
                                 viewModel.clearDidDocument()
+                                viewModel.clearIsDidSaved()
                             }
                         },
                     ) {

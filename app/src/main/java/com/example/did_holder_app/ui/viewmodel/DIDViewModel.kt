@@ -25,6 +25,7 @@ class DIDViewModel(
     val didDocument: Flow<DidDocument?> = dataStore.didDocumentFlow
     val vc: Flow<VcResponseData?> = dataStore.vcFlow
     val userSeq: Flow<Int?> = dataStore.userSeqFlow
+    val isDidSaved: Flow<Boolean?> = dataStore.isDidSavedFlow
 
     // DID Document 생성
     @RequiresApi(Build.VERSION_CODES.O)
@@ -85,6 +86,7 @@ class DIDViewModel(
     // VC 발급 요청
     fun requestVC(request: VCRequest, result: (Response<VcResponse>) -> Unit) {
         viewModelScope.launch {
+            delay(3000)
             didRepository.requestVC(request, result)
         }
     }
@@ -109,6 +111,18 @@ class DIDViewModel(
     fun verifyVP(result: (Response<VpResponse>) -> Unit) {
         viewModelScope.launch {
             didRepository.verifyVP(result)
+        }
+    }
+
+    fun saveIsDidSaved(isDidSaved: Boolean) {
+        viewModelScope.launch {
+            dataStore.saveIsDidSaved(isDidSaved)
+        }
+    }
+
+    fun clearIsDidSaved() {
+        viewModelScope.launch {
+            dataStore.clearIsDidSaved()
         }
     }
 

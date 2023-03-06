@@ -34,7 +34,26 @@ class DidDataStore(context: Context) {
         val USERSEQ = stringPreferencesKey("userseq")
         val PRIVATE_KEY = stringPreferencesKey("private_key")
         val VP = stringPreferencesKey("vp")
+
+        val IS_DID_SAVED = stringPreferencesKey("is_did_saved")
     }
+
+    val isDidSavedFlow: Flow<Boolean> = context.dataStore.data.map {
+        it[Key.IS_DID_SAVED].toBoolean()
+    }
+
+    suspend fun saveIsDidSaved(isDidSaved: Boolean) {
+        dataStore.edit {
+            it[Key.IS_DID_SAVED] = isDidSaved.toString()
+        }
+    }
+
+    suspend fun clearIsDidSaved() {
+        dataStore.edit {
+            it.remove(Key.IS_DID_SAVED)
+        }
+    }
+
     val vpFlow: Flow<String?> = context.dataStore.data.map {
         it[Key.VP]
     }
@@ -44,6 +63,7 @@ class DidDataStore(context: Context) {
             it[Key.VP] = vp
         }
     }
+
     suspend fun clearVp() {
         dataStore.edit {
             it.remove(Key.VP)
