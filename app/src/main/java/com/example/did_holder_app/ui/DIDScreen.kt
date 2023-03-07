@@ -9,6 +9,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -106,14 +108,25 @@ fun WithDidScreen(
     }
     val isDidSaved  = viewModel.isDidSaved.collectAsState(initial = false)
     val resultIsDidSaved = isDidSaved.value
-
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(26.dp),
+            .padding(horizontal = 26.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top
     ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp),
+            horizontalArrangement = Arrangement.End
+        ) {
+            IconButton(
+                onClick = {
+                },
+            ) {
+            }
+        }
         FlipCard(
             cardFace = cardFace,
             onClick = { cardFace = cardFace.next },

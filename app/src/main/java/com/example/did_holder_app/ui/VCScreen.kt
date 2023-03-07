@@ -65,7 +65,7 @@ fun VCScreen(navController: NavController, viewModel: DIDViewModel) {
         Issuer(
             institutionName = "세종텔레콤",
             logoImageUrl = "https://www.medigatenews.com/file/news/268421",
-            type = "출입증",
+            type = "사원증",
             available = true,
         ),
         Issuer(
@@ -454,11 +454,12 @@ fun LoadingScreen(message: String) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         CircularProgressIndicator()
+        Spacer(modifier = Modifier.height(10.dp))
         Text(
             text = message,
             style = TextStyle(
                 color = Color.Black,
-                fontSize = 20.sp,
+                fontSize = 15.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center
             ),
