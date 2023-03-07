@@ -37,7 +37,6 @@ import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.launch
-import timber.log.Timber
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -54,10 +53,12 @@ fun VCScreen(navController: NavController, viewModel: DIDViewModel) {
 
 
     var isLoading by remember { mutableStateOf(false) }
+    var loadingMessage by remember { mutableStateOf("Loading...") }
     var showIssuerList by remember { mutableStateOf(false) }
 
     val moshi: Moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
     val jsonAdapter: JsonAdapter<VcResponseData> = moshi.adapter(VcResponseData::class.java)
+
     val vcResponseData = jsonAdapter.toJson(savedVC.value)
 
     val issuerList: List<Issuer> = listOf(
@@ -99,35 +100,34 @@ fun VCScreen(navController: NavController, viewModel: DIDViewModel) {
             .padding(0.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        when {
-            savedVC.value == null -> {
-                if (isLoading) {
-                    CircularProgressIndicator()
-                    Box(modifier = Modifier.padding(8.dp))
-                    Text(text = "생성중...", style = MaterialTheme.typography.labelSmall)
-                } else {
-                    savedDidDocument.value?.let {
-
-                        Text (
-                            text = "아직 보유한 VC가 없습니다.",
-                            style = TextStyle(fontSize = 18.sp),
-                            modifier = Modifier.padding(top = 20.dp, bottom = 5.dp))
-                        IssuerCardListView(
-                            issuerList = issuerList,
-                            viewModel = viewModel,
-                            didDocument = it,
-                        )
+        if(isLoading){
+            LoadingScreen( message = loadingMessage )
+        } else {
+            when {
+                savedVC.value == null -> {
+                        savedDidDocument.value?.let {
+                            Text (
+                                text = "아직 보유한 VC가 없습니다.",
+                                style = TextStyle(fontSize = 18.sp),
+                                modifier = Modifier.padding(top = 20.dp, bottom = 5.dp))
+                            IssuerCardListView(
+                                isLoading = isLoading,
+                                setIsLoading = { isLoading = it },
+                                setLoadingMessage = { loadingMessage = it },
+                                issuerList = issuerList,
+                                viewModel = viewModel,
+                                didDocument = it,
+                            )
                     }
                 }
-            }
 
-            (savedVC.value != null && !showIssuerList) -> {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 14.dp),
-                    horizontalArrangement = Arrangement.End
-                ) {
+                (savedVC.value != null && !showIssuerList) -> {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 14.dp),
+                        horizontalArrangement = Arrangement.End
+                    ) {
                         IconButton(
                             onClick = {
                                 showIssuerList = true
@@ -141,265 +141,243 @@ fun VCScreen(navController: NavController, viewModel: DIDViewModel) {
                                 tint = Color.Black
                             )
                         }
-                }
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 26.dp, vertical = 0.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Top
-                ) {
-                    FlipCard(
-                        cardFace = cardFace,
-                        onClick = { cardFace = cardFace.next },
+                    }
+                    Column(
                         modifier = Modifier
-                            .fillMaxWidth(1f)
-                            .aspectRatio(0.6f),
-                        front = {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxSize(),
-                                verticalArrangement = Arrangement.Top,
+                            .fillMaxSize()
+                            .padding(horizontal = 26.dp, vertical = 0.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Top
+                    ) {
+                        FlipCard(
+                            cardFace = cardFace,
+                            onClick = { cardFace = cardFace.next },
+                            modifier = Modifier
+                                .fillMaxWidth(1f)
+                                .aspectRatio(0.6f),
+                            front = {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxSize(),
+                                    verticalArrangement = Arrangement.Top,
 
-                                ) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth(1f)
-                                        .fillMaxHeight(0.7f)
-                                        .background(Color.White),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    Column(
-                                        modifier = Modifier
-                                            .padding(bottom = 10.dp)
-                                            .fillMaxHeight(1f)
-                                            .fillMaxWidth(1f),
-                                        verticalArrangement = Arrangement.Center,
-                                        horizontalAlignment = Alignment.CenterHorizontally
                                     ) {
-                                        AsyncImage(
-                                            model = "https://www.medigatenews.com/file/news/268421",
-                                            modifier = Modifier
-                                                .fillMaxWidth(0.8f)
-                                                .fillMaxHeight(0.6f),
-                                            contentDescription = "세종텔레콤 사원증"
-                                        )
-                                    }
-                                }
-                                Box(
-                                    modifier = Modifier
-                                        .background(Color.Red)
-                                        .fillMaxWidth(1f)
-                                        .fillMaxHeight(1f),
-                                ) {
-                                    Column(
+                                    Box(
                                         modifier = Modifier
-                                            .padding(horizontal = 14.dp, vertical = 12.dp)
+                                            .fillMaxWidth(1f)
+                                            .fillMaxHeight(0.7f)
+                                            .background(Color.White),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        Column(
+                                            modifier = Modifier
+                                                .padding(bottom = 10.dp)
+                                                .fillMaxHeight(1f)
+                                                .fillMaxWidth(1f),
+                                            verticalArrangement = Arrangement.Center,
+                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        ) {
+                                            AsyncImage(
+                                                model = "https://www.medigatenews.com/file/news/268421",
+                                                modifier = Modifier
+                                                    .fillMaxWidth(0.8f)
+                                                    .fillMaxHeight(0.6f),
+                                                contentDescription = "세종텔레콤 사원증"
+                                            )
+                                        }
+                                    }
+                                    Box(
+                                        modifier = Modifier
+                                            .background(Color.Red)
                                             .fillMaxWidth(1f)
                                             .fillMaxHeight(1f),
-                                        verticalArrangement = Arrangement.SpaceBetween,
                                     ) {
-                                        Column() {
-                                            Text(
-                                                text = "세종텔레콤",
-                                                style = TextStyle(
-                                                    color = Color.White,
-                                                    fontSize = 22.sp,
-                                                    fontWeight = FontWeight.Medium
+                                        Column(
+                                            modifier = Modifier
+                                                .padding(horizontal = 14.dp, vertical = 12.dp)
+                                                .fillMaxWidth(1f)
+                                                .fillMaxHeight(1f),
+                                            verticalArrangement = Arrangement.SpaceBetween,
+                                        ) {
+                                            Column() {
+                                                Text(
+                                                    text = "세종텔레콤",
+                                                    style = TextStyle(
+                                                        color = Color.White,
+                                                        fontSize = 22.sp,
+                                                        fontWeight = FontWeight.Medium
+                                                    )
                                                 )
-                                            )
 
+                                                Text(
+                                                    text = "사원증",
+                                                    style = TextStyle(
+                                                        color = Color.White,
+                                                        fontSize = 18.sp,
+                                                        fontWeight = FontWeight.Normal
+                                                    )
+                                                )
+                                            }
+                                            if (savedVC.value!!.issuanceDate != "") {
+                                                val issuanceDate =
+                                                    savedVC.value?.issuanceDate.toString()
+                                                val expirationDate =
+                                                    savedVC.value?.validUntil.toString()
+                                                val inputFormat = DateTimeFormatter.ISO_DATE_TIME
+                                                val outputFormat =
+                                                    DateTimeFormatter.ofPattern("yyyy년 MM월 dd일 HH시 mm분")
+                                                Text(
+                                                    modifier = Modifier.padding(
+                                                        top = 5.dp,
+                                                        bottom = 5.dp
+                                                    ),
+                                                    text = "발급일시: ${
+                                                        outputFormat.format(
+                                                            LocalDateTime.parse(
+                                                                issuanceDate,
+                                                                inputFormat
+                                                            )
+                                                        )
+                                                    }",
+                                                    style = TextStyle(
+                                                        color = Color.White,
+                                                        fontSize = 13.sp,
+                                                        fontWeight = FontWeight.Light
+                                                    )
+                                                )
+                                            }
+
+                                        }
+                                    }
+                                }
+                            },
+                            back = {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(14.dp),
+                                    verticalArrangement = Arrangement.SpaceBetween,
+                                ) {
+                                    if(savedVC.value!!.vcCredentialSubject.isNotEmpty()){
+                                        val credentialSubject: VcCredentialSubject = savedVC.value!!.vcCredentialSubject[0]
+                                        Column {
                                             Text(
-                                                text = "사원증",
-                                                style = TextStyle(
-                                                    color = Color.White,
-                                                    fontSize = 18.sp,
-                                                    fontWeight = FontWeight.Normal
+                                                "사원정보", style = TextStyle(
+                                                    color = Color.Black,
+                                                    fontSize = 24.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    letterSpacing = 0.sp
                                                 )
                                             )
-                                        }
-                                        if (savedVC.value!!.issuanceDate != "") {
-                                            val issuanceDate =
-                                                savedVC.value?.issuanceDate.toString()
-                                            val expirationDate =
-                                                savedVC.value?.validUntil.toString()
-                                            val inputFormat = DateTimeFormatter.ISO_DATE_TIME
-                                            val outputFormat =
-                                                DateTimeFormatter.ofPattern("yyyy년 MM월 dd일 HH시 mm분")
-                                            Text(
-                                                modifier = Modifier.padding(
-                                                    top = 5.dp,
-                                                    bottom = 5.dp
-                                                ),
-                                                text = "발급일시: ${
-                                                    outputFormat.format(
-                                                        LocalDateTime.parse(
-                                                            issuanceDate,
-                                                            inputFormat
+                                            LazyColumn ( modifier = Modifier
+                                                .fillMaxHeight(0.9f)
+                                                .padding(top = 10.dp), verticalArrangement = Arrangement.SpaceBetween) {
+                                                item {
+                                                    Text(
+                                                        "이름",
+                                                        style = TextStyle(
+                                                            color = Color.Black,
+                                                            fontSize = 16.sp,
+                                                            fontWeight = FontWeight.SemiBold,
+                                                            letterSpacing = 0.sp
                                                         )
                                                     )
-                                                }",
-                                                style = TextStyle(
-                                                    color = Color.White,
-                                                    fontSize = 13.sp,
-                                                    fontWeight = FontWeight.Light
-                                                )
-                                            )
-                                        }
+                                                    Text(
+                                                        text = credentialSubject.name,
+                                                        style = TextStyle(
+                                                            color = Color.Black,
+                                                            fontSize = 11.sp,
+                                                            fontWeight = FontWeight.SemiBold,
+                                                        )
+                                                    )
+                                                    Spacer(modifier = Modifier.height(3.dp))
+                                                    Text(
+                                                        "직급",
+                                                        style = TextStyle(
+                                                            color = Color.Black,
+                                                            fontSize = 16.sp,
+                                                            fontWeight = FontWeight.SemiBold,
+                                                            letterSpacing = 0.sp
+                                                        )
+                                                    )
+                                                    Text(
+                                                        text = credentialSubject.position,
+                                                        style = TextStyle(
+                                                            color = Color.Black,
+                                                            fontSize = 11.sp,
+                                                            fontWeight = FontWeight.SemiBold,
+                                                        )
+                                                    )
+                                                    Spacer(modifier = Modifier.height(3.dp))
+                                                    Text(
+                                                        "부서",
+                                                        style = TextStyle(
+                                                            color = Color.Black,
+                                                            fontSize = 16.sp,
+                                                            fontWeight = FontWeight.SemiBold,
+                                                            letterSpacing = 0.sp
+                                                        )
+                                                    )
+                                                    Text(
+                                                        text = credentialSubject.type,
+                                                        style = TextStyle(
+                                                            color = Color.Black,
+                                                            fontSize = 11.sp,
+                                                            fontWeight = FontWeight.SemiBold,
+                                                        )
+                                                    )
+                                                    Spacer(modifier = Modifier.height(10.dp))
+                                                    Text(
+                                                        "인증서 전문",
+                                                        style = TextStyle(
+                                                            color = Color.Black,
+                                                            fontSize = 16.sp,
+                                                            fontWeight = FontWeight.SemiBold,
+                                                            letterSpacing = 0.sp
+                                                        )
+                                                    )
+                                                    Text(
+                                                        text = vcResponseData,
+                                                        style = TextStyle(
+                                                            color = Color.Black,
+                                                            fontSize = 9.sp,
+                                                            fontWeight = FontWeight.SemiBold,
+                                                        )
+                                                    )
 
-                                    }
-                                }
-                            }
-                        },
-                        back = {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(14.dp),
-                                verticalArrangement = Arrangement.SpaceBetween,
-
-                                ) {
-                                if(savedVC.value!!.vcCredentialSubject.isNotEmpty()){
-                                    val credentialSubject: VcCredentialSubject = savedVC.value!!.vcCredentialSubject[0]
-                                    Column {
-                                        Text(
-                                            "사원정보", style = TextStyle(
-                                                color = Color.Black,
-                                                fontSize = 24.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                letterSpacing = 0.sp
-                                            )
-                                        )
-                                        Column ( modifier = Modifier.fillMaxHeight(0.3f).padding(top = 10.dp), verticalArrangement = Arrangement.SpaceBetween) {
-                                            Text(
-                                                "이름",
-                                                style = TextStyle(
-                                                    color = Color.Black,
-                                                    fontSize = 16.sp,
-                                                    fontWeight = FontWeight.SemiBold,
-                                                    letterSpacing = 0.sp
-                                                )
-                                            )
-                                            Text(
-                                                text = credentialSubject.name,
-                                                style = TextStyle(
-                                                    color = Color.Black,
-                                                    fontSize = 11.sp,
-                                                    fontWeight = FontWeight.SemiBold,
-                                                )
-                                            )
-                                            Text(
-                                                "직급",
-                                                style = TextStyle(
-                                                    color = Color.Black,
-                                                    fontSize = 16.sp,
-                                                    fontWeight = FontWeight.SemiBold,
-                                                    letterSpacing = 0.sp
-                                                )
-                                            )
-                                            Text(
-                                                text = credentialSubject.position,
-                                                style = TextStyle(
-                                                    color = Color.Black,
-                                                    fontSize = 11.sp,
-                                                    fontWeight = FontWeight.SemiBold,
-                                                )
-                                            )
-                                            Text(
-                                                "부서",
-                                                style = TextStyle(
-                                                    color = Color.Black,
-                                                    fontSize = 16.sp,
-                                                    fontWeight = FontWeight.SemiBold,
-                                                    letterSpacing = 0.sp
-                                                )
-                                            )
-                                            Text(
-                                                text = credentialSubject.type,
-                                                style = TextStyle(
-                                                    color = Color.Black,
-                                                    fontSize = 11.sp,
-                                                    fontWeight = FontWeight.SemiBold,
-                                                )
-                                            )
+                                                }
+                                            }
                                         }
                                     }
-                                }
+                                    Button(
+                                        modifier = Modifier.fillMaxWidth(1f),
+                                        colors = ButtonDefaults.buttonColors(
+                                            contentColor = Color.White
+                                        ),
+                                        shape = RoundedCornerShape(10.dp),
+                                        onClick = {
+                                            scope.launch {
+                                                viewModel.clearVc()
+                                            }
+                                            cardFace = cardFace.next
+                                        },
+                                    ) {
+                                        Text(text = "VC 삭제")
+                                    }
 
-//                                Button(
-//                                    modifier = Modifier
-//                                        .fillMaxWidth(1f)
-//                                        .padding(vertical = 5.dp),
-//                                    colors = ButtonDefaults.buttonColors(
-//                                        containerColor = Color.White,
-//                                        contentColor = Color.Black
-//                                    ),
-//                                    shape = RoundedCornerShape(10.dp),
-//                                    onClick = {
-//                                        isLoading = true
-//                                        viewModel.requestVC(
-//                                            VCRequest(
-//                                                39,
-//                                                savedDidDocument.value?.id
-//                                            )
-//                                        ) {
-//                                            isLoading = false
-//                                            if (it.isSuccessful) {
-//                                                if (it.body()?.code == 0) {
-//                                                    Toast.makeText(
-//                                                        context,
-//                                                        "VC 발급성공",
-//                                                        Toast.LENGTH_SHORT
-//                                                    )
-//                                                        .show()
-//                                                } else {
-//                                                    Toast.makeText(
-//                                                        context,
-//                                                        "실패 : ${it.body()?.msg}",
-//                                                        Toast.LENGTH_SHORT
-//                                                    ).show()
-//                                                }
-//                                            } else {
-//                                                Toast.makeText(
-//                                                    context,
-//                                                    "실패 : ${it.message()}",
-//                                                    Toast.LENGTH_SHORT
-//                                                )
-//                                                    .show()
-//                                            }
-//                                        }
-//                                    }) {
-//                                    Text(text = "인증서 재발급")
-//                                }
-                                Button(
-                                    modifier = Modifier.fillMaxWidth(1f),
-                                    colors = ButtonDefaults.buttonColors(
-                                        contentColor = Color.White
-                                    ),
-                                    shape = RoundedCornerShape(10.dp),
-                                    onClick = {
-                                        scope.launch {
-                                            viewModel.clearVc()
-                                        }
-                                        cardFace = cardFace.next
-                                    },
-                                ) {
-                                    Text(text = "VC 삭제")
                                 }
-
-                            }
-                        },
-                    )
+                            },
+                        )
+                    }
                 }
-            }
 
-            savedVC.value != null && showIssuerList -> {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 14.dp),
-                    horizontalArrangement = Arrangement.End
-                ) {
+                savedVC.value != null && showIssuerList -> {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 14.dp),
+                        horizontalArrangement = Arrangement.End
+                    ) {
                         IconButton(
                             onClick = {
                                 showIssuerList = false
@@ -413,56 +391,78 @@ fun VCScreen(navController: NavController, viewModel: DIDViewModel) {
                                 tint = Color.Black
                             )
                         }
-                }
-                IssuerCardListView(issuerList = issuerList, didDocument = savedDidDocument.value!!, viewModel = viewModel)
-
-            }
-
-            else -> {
-                var userId by remember { mutableStateOf("androidTest") }
-                var userPassword by remember { mutableStateOf("androidTest1") }
-                OutlinedTextField(
-                    value = userId,
-                    onValueChange = { userId = it },
-                    label = { Text("User ID") },
-                    singleLine = true
-                )
-                OutlinedTextField(
-                    value = userPassword,
-                    onValueChange = { userPassword = it },
-                    label = { Text("Password") },
-                    singleLine = true,
-                    visualTransformation = PasswordVisualTransformation()
-                )
-                Button(onClick = {
-                    val signInRequest = SignInRequest(userId, userPassword)
-                    viewModel.signInUser(signInRequest) {
-                        if (it.isSuccessful) {
-                            if (it.body()?.code == 0) {
-                                Toast.makeText(context, "로그인 성공", Toast.LENGTH_SHORT).show()
-                            } else {
-                                Toast.makeText(
-                                    context,
-                                    "실패 : ${it.body()?.msg}",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                        } else {
-                            Toast.makeText(context, "실패 : ${it.message()}", Toast.LENGTH_SHORT)
-                                .show()
-                        }
                     }
-                }) {
-                    Text(text = "로그인", style = MaterialTheme.typography.labelSmall)
+                    IssuerCardListView(issuerList = issuerList, didDocument = savedDidDocument.value!!, viewModel = viewModel, setIsLoading = { isLoading = it }, isLoading = isLoading, setLoadingMessage = {loadingMessage = it} )
+
                 }
-                Text(text = "또는", style = MaterialTheme.typography.labelSmall)
-                Button(onClick = {
-                    navController.navigate(Constants.SIGN_UP_SCREEN_NAME)
-                }) {
-                    Text(text = "회원가입", style = MaterialTheme.typography.labelSmall)
+                else -> {
+                    var userId by remember { mutableStateOf("androidTest") }
+                    var userPassword by remember { mutableStateOf("androidTest1") }
+                    OutlinedTextField(
+                        value = userId,
+                        onValueChange = { userId = it },
+                        label = { Text("User ID") },
+                        singleLine = true
+                    )
+                    OutlinedTextField(
+                        value = userPassword,
+                        onValueChange = { userPassword = it },
+                        label = { Text("Password") },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation()
+                    )
+                    Button(onClick = {
+                        val signInRequest = SignInRequest(userId, userPassword)
+                        viewModel.signInUser(signInRequest) {
+                            if (it.isSuccessful) {
+                                if (it.body()?.code == 0) {
+                                    Toast.makeText(context, "로그인 성공", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    Toast.makeText(
+                                        context,
+                                        "실패 : ${it.body()?.msg}",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            } else {
+                                Toast.makeText(context, "실패 : ${it.message()}", Toast.LENGTH_SHORT)
+                                    .show()
+                            }
+                        }
+                    }) {
+                        Text(text = "로그인", style = MaterialTheme.typography.labelSmall)
+                    }
+                    Text(text = "또는", style = MaterialTheme.typography.labelSmall)
+                    Button(onClick = {
+                        navController.navigate(Constants.SIGN_UP_SCREEN_NAME)
+                    }) {
+                        Text(text = "회원가입", style = MaterialTheme.typography.labelSmall)
+                    }
                 }
             }
         }
+    }
+}
+
+@Composable
+fun LoadingScreen(message: String) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        CircularProgressIndicator()
+        Text(
+            text = message,
+            style = TextStyle(
+                color = Color.Black,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            ),
+        )
     }
 }
 
@@ -476,7 +476,7 @@ data class Issuer(
 
 
 @Composable
-fun IssuerCardListView(issuerList: List<Issuer>, viewModel: DIDViewModel, didDocument: DidDocument) {
+fun IssuerCardListView(isLoading : Boolean, setIsLoading: (Boolean) -> Unit, issuerList: List<Issuer>, viewModel: DIDViewModel, didDocument: DidDocument, setLoadingMessage : (String) -> Unit) {
     Column(modifier = Modifier.fillMaxHeight(0.9f)) {
         Text(
             modifier = Modifier
@@ -497,7 +497,7 @@ fun IssuerCardListView(issuerList: List<Issuer>, viewModel: DIDViewModel, didDoc
         ) {
             LazyColumn(modifier = Modifier.fillMaxHeight(1f)) {
                 items(issuerList) { issuer ->
-                    IssuerCard(issuer = issuer, viewModel, didDocument)
+                    IssuerCard(isLoading, setIsLoading, setLoadingMessage, issuer = issuer, viewModel, didDocument)
                 }
             }
         }
@@ -506,9 +506,15 @@ fun IssuerCardListView(issuerList: List<Issuer>, viewModel: DIDViewModel, didDoc
 }
 
 @Composable
-fun IssuerCard(issuer: Issuer, viewModel: DIDViewModel, savedDidDocument: DidDocument) {
+fun IssuerCard(
+    isLoading: Boolean,
+    setIsLoading: (Boolean) -> Unit,
+    setLoadingMessage: (String) -> Unit,
+    issuer: Issuer,
+    viewModel: DIDViewModel,
+    savedDidDocument: DidDocument
+) {
     val context = LocalContext.current
-    var isLoading by remember { mutableStateOf(false) }
     Card(
         modifier = Modifier
             .padding(horizontal = 10.dp, vertical = 5.dp)
@@ -526,14 +532,15 @@ fun IssuerCard(issuer: Issuer, viewModel: DIDViewModel, savedDidDocument: DidDoc
                 .fillMaxHeight()
                 .clickable(onClick = {
                     if (issuer.available) {
-                        isLoading = true
+                        setLoadingMessage("VC 발급중")
+                        setIsLoading(true)
                         viewModel.requestVC(
                             VCRequest(
                                 39,
                                 savedDidDocument.id,
                             )
                         ) {
-                            isLoading = false
+                            setIsLoading(false)
                             if (it.isSuccessful) {
                                 if (it.body()?.code == 0) {
                                     Toast

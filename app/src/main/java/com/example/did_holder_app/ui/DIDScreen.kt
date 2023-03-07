@@ -1,16 +1,13 @@
 package com.example.did_holder_app.ui
 
 import android.graphics.Color.rgb
-import android.os.Build
 import android.widget.Toast
-import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.magnifier
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -19,7 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -31,7 +27,6 @@ import com.example.did_holder_app.ui.viewmodel.DIDViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun DIDScreen(viewModel: DIDViewModel) {
     val scope = rememberCoroutineScope()
@@ -45,7 +40,6 @@ fun DIDScreen(viewModel: DIDViewModel) {
     DIDScreenState(viewModel, scope, state)
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun DIDScreenState(
     viewModel: DIDViewModel,
@@ -63,14 +57,14 @@ sealed class DIDState {
     data class Existing(val didDocument: DidDocument) : DIDState()
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun EmptyDidScreen(viewModel: DIDViewModel) {
     var isLoading by remember {
         mutableStateOf(false)
     }
-
-    var scope = rememberCoroutineScope()
+    var loadingMessage by remember {
+        mutableStateOf("DID 생성 중입니다.")
+    }
 
     if (isLoading) {
         LoadingScreen(message = "DID 생성 중입니다.")
@@ -85,6 +79,7 @@ fun EmptyDidScreen(viewModel: DIDViewModel) {
             Button(
                 onClick = {
                     isLoading = true
+                    loadingMessage = "DID 생성 중입니다."
                     viewModel.generateDidDocument {
                         isLoading = false
                     }
@@ -97,22 +92,8 @@ fun EmptyDidScreen(viewModel: DIDViewModel) {
     }
 }
 
-@Composable
-fun LoadingScreen(message: String) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        CircularProgressIndicator()
-        Text(text = message)
-    }
-}
 
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun WithDidScreen(
     viewModel: DIDViewModel,
@@ -202,7 +183,7 @@ fun WithDidScreen(
                             .fillMaxHeight(1f),
                         verticalArrangement = Arrangement.SpaceBetween,
                     ) {
-                        Column() {
+                        Column {
                             Row(
                                 modifier = Modifier.fillMaxWidth(1f),
                                 horizontalArrangement = Arrangement.SpaceBetween,
