@@ -29,6 +29,7 @@ import coil.compose.AsyncImage
 import com.example.did_holder_app.data.model.DIDDocument.DidDocument
 import com.example.did_holder_app.data.model.VC.SignInRequest
 import com.example.did_holder_app.data.model.VC.VCRequest
+import com.example.did_holder_app.data.model.VC.VcCredentialSubject
 import com.example.did_holder_app.data.model.VC.VcResponseData
 import com.example.did_holder_app.ui.viewmodel.DIDViewModel
 import com.example.did_holder_app.util.Constants
@@ -63,26 +64,31 @@ fun VCScreen(navController: NavController, viewModel: DIDViewModel) {
         Issuer(
             institutionName = "세종텔레콤",
             logoImageUrl = "https://www.medigatenews.com/file/news/268421",
-            type = "출입증"
+            type = "출입증",
+            available = true,
         ),
         Issuer(
             logoImageUrl = "https://www.molit.go.kr/images/www2019/contents/img_05010401.jpg",
             institutionName = "국토교통부",
+            available = false,
             type = "운전면허증"
         ),
         Issuer(
             logoImageUrl = "https://seeklogo.com/images/S/Samsung_Electronics-logo-4470505FDD-seeklogo.com.png",
             institutionName = "삼성전자",
+            available = false,
             type = "사원증"
         ),
         Issuer(
             logoImageUrl = "https://seeklogo.com/images/L/LG_Electronics-logo-DDDB1A917D-seeklogo.com.png",
             institutionName = "LG전자",
+            available = false,
             type = "사원증"
         ),
         Issuer(
             logoImageUrl = "https://seeklogo.com/images/S/SK_Telecom-logo-4DB6A97650-seeklogo.com.png",
             institutionName = "SK텔레콤",
+            available = false,
             type = "사원증"
         ),
     )
@@ -93,40 +99,6 @@ fun VCScreen(navController: NavController, viewModel: DIDViewModel) {
             .padding(0.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp),
-            horizontalArrangement = Arrangement.End
-        ) {
-            if (!showIssuerList ){
-                IconButton(
-                    onClick = {
-                        showIssuerList = true
-                    },
-                ) {
-                    Icon(
-                        modifier = Modifier
-                            .size(30.dp),
-                        imageVector = Icons.Default.Menu,
-                        contentDescription = "open issuer list",
-                        tint = Color.Black
-                    )
-                }
-            } else{
-                IconButton(
-                    onClick = {
-                        showIssuerList = false
-                    },
-                ) {
-                    Icon(
-                        modifier = Modifier
-                            .size(30.dp),
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "close issuer list",
-                        tint = Color.Black
-                    )
-                }
-            }
-        }
         when {
             savedVC.value == null -> {
                 if (isLoading) {
@@ -134,53 +106,42 @@ fun VCScreen(navController: NavController, viewModel: DIDViewModel) {
                     Box(modifier = Modifier.padding(8.dp))
                     Text(text = "생성중...", style = MaterialTheme.typography.labelSmall)
                 } else {
-                    Button(
-                        modifier = Modifier.fillMaxWidth(1f),
-                        colors = ButtonDefaults.buttonColors(
-                            contentColor = Color.White
-                        ),
-                        shape = RoundedCornerShape(10.dp),
-                        onClick = {
-                            isLoading = true
-                            viewModel.requestVC(
-                                VCRequest(
-                                    //todo login 화면 없으므로 userSeq 하드코딩
-                                    39,
-                                    savedDidDocument.value?.id
-                                )
-                            ) {
-                                isLoading = false
-                                if (it.isSuccessful) {
-                                    Timber.d("VC 요청완료 : ${it.body()?.code}")
-                                    if (it.body()?.code == 0) {
-                                        Toast.makeText(context, "VC 요청완료", Toast.LENGTH_SHORT)
-                                            .show()
-                                    } else {
-                                        Toast.makeText(
-                                            context,
-                                            "실패 : ${it.body()?.msg}",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-                                } else {
-                                    Toast.makeText(
-                                        context,
-                                        "실패 : ${it.message()}",
-                                        Toast.LENGTH_SHORT
-                                    )
-                                        .show()
-                                }
-                            }
-                        },
-                        enabled = !isLoading
-                    )
-                    {
-                        Text(text = "VC요청", style = MaterialTheme.typography.labelSmall)
+                    savedDidDocument.value?.let {
+
+                        Text (
+                            text = "아직 보유한 VC가 없습니다.",
+                            style = TextStyle(fontSize = 18.sp),
+                            modifier = Modifier.padding(top = 20.dp, bottom = 5.dp))
+                        IssuerCardListView(
+                            issuerList = issuerList,
+                            viewModel = viewModel,
+                            didDocument = it,
+                        )
                     }
                 }
             }
+
             (savedVC.value != null && !showIssuerList) -> {
-//                IssuerCardListView(issuerList = issuerList)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                        IconButton(
+                            onClick = {
+                                showIssuerList = true
+                            },
+                        ) {
+                            Icon(
+                                modifier = Modifier
+                                    .size(30.dp),
+                                imageVector = Icons.Default.Menu,
+                                contentDescription = "open issuer list",
+                                tint = Color.Black
+                            )
+                        }
+                }
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -270,7 +231,7 @@ fun VCScreen(navController: NavController, viewModel: DIDViewModel) {
                                                     top = 5.dp,
                                                     bottom = 5.dp
                                                 ),
-                                                text = "발급일: ${
+                                                text = "발급일시: ${
                                                     outputFormat.format(
                                                         LocalDateTime.parse(
                                                             issuanceDate,
@@ -298,103 +259,118 @@ fun VCScreen(navController: NavController, viewModel: DIDViewModel) {
                                 verticalArrangement = Arrangement.SpaceBetween,
 
                                 ) {
-                                Column {
-                                    Text(
-                                        "나의 DID 정보", style = TextStyle(
-                                            color = Color.Black,
-                                            fontSize = 24.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            letterSpacing = 0.sp
+                                if(savedVC.value!!.vcCredentialSubject.isNotEmpty()){
+                                    val credentialSubject: VcCredentialSubject = savedVC.value!!.vcCredentialSubject[0]
+                                    Column {
+                                        Text(
+                                            "사원정보", style = TextStyle(
+                                                color = Color.Black,
+                                                fontSize = 24.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                letterSpacing = 0.sp
+                                            )
                                         )
-                                    )
-                                    Spacer(
-                                        modifier = Modifier
-                                            .fillMaxWidth(1f)
-                                            .height(10.dp)
-                                    )
-                                    Text(
-                                        "DID",
-                                        style = TextStyle(
-                                            color = Color.Black,
-                                            fontSize = 16.sp,
-                                            fontWeight = FontWeight.SemiBold,
-                                            letterSpacing = 0.sp
-                                        )
-                                    )
-                                    Text(
-                                        text = "dummy",
-                                        style = TextStyle(
-                                            color = Color.Black,
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.SemiBold,
-                                        )
-                                    )
-                                    Text(
-                                        text = "Document",
-                                        style = TextStyle(
-                                            color = Color.Black,
-                                            fontSize = 16.sp,
-                                            fontWeight = FontWeight.SemiBold,
-                                            letterSpacing = 0.sp
-                                        )
-                                    )
-                                    Text(
-                                        text = "dummy",
-                                        style = TextStyle(
-                                            color = Color.Black,
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.SemiBold,
-                                        )
-                                    )
+                                        Column ( modifier = Modifier.fillMaxHeight(0.3f).padding(top = 10.dp), verticalArrangement = Arrangement.SpaceBetween) {
+                                            Text(
+                                                "이름",
+                                                style = TextStyle(
+                                                    color = Color.Black,
+                                                    fontSize = 16.sp,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    letterSpacing = 0.sp
+                                                )
+                                            )
+                                            Text(
+                                                text = credentialSubject.name,
+                                                style = TextStyle(
+                                                    color = Color.Black,
+                                                    fontSize = 11.sp,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                )
+                                            )
+                                            Text(
+                                                "직급",
+                                                style = TextStyle(
+                                                    color = Color.Black,
+                                                    fontSize = 16.sp,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    letterSpacing = 0.sp
+                                                )
+                                            )
+                                            Text(
+                                                text = credentialSubject.position,
+                                                style = TextStyle(
+                                                    color = Color.Black,
+                                                    fontSize = 11.sp,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                )
+                                            )
+                                            Text(
+                                                "부서",
+                                                style = TextStyle(
+                                                    color = Color.Black,
+                                                    fontSize = 16.sp,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    letterSpacing = 0.sp
+                                                )
+                                            )
+                                            Text(
+                                                text = credentialSubject.type,
+                                                style = TextStyle(
+                                                    color = Color.Black,
+                                                    fontSize = 11.sp,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                )
+                                            )
+                                        }
+                                    }
                                 }
 
-                                Button(
-                                    modifier = Modifier
-                                        .fillMaxWidth(1f)
-                                        .padding(vertical = 5.dp),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color.White,
-                                        contentColor = Color.Black
-                                    ),
-                                    shape = RoundedCornerShape(10.dp),
-                                    onClick = {
-                                        isLoading = true
-                                        viewModel.requestVC(
-                                            VCRequest(
-                                                //todo login 화면 없으므로 userSeq 하드코딩
-                                                39,
-                                                savedDidDocument.value?.id
-                                            )
-                                        ) {
-                                            isLoading = false
-                                            if (it.isSuccessful) {
-                                                Timber.d("VC 요청완료 : ${it.body()?.code}")
-                                                if (it.body()?.code == 0) {
-                                                    Toast.makeText(
-                                                        context,
-                                                        "VC 요청완료",
-                                                        Toast.LENGTH_SHORT
-                                                    )
-                                                        .show()
-                                                } else {
-                                                    Toast.makeText(
-                                                        context,
-                                                        "실패 : ${it.body()?.msg}",
-                                                        Toast.LENGTH_SHORT
-                                                    ).show()
-                                                }
-                                            } else {
-                                                Toast.makeText(
-                                                    context,
-                                                    "실패 : ${it.message()}",
-                                                    Toast.LENGTH_SHORT
-                                                )
-                                                    .show()
-                                            }
-                                        }
-                                    }) {
-                                    Text(text = "VC 갱신요청")
-                                }
+//                                Button(
+//                                    modifier = Modifier
+//                                        .fillMaxWidth(1f)
+//                                        .padding(vertical = 5.dp),
+//                                    colors = ButtonDefaults.buttonColors(
+//                                        containerColor = Color.White,
+//                                        contentColor = Color.Black
+//                                    ),
+//                                    shape = RoundedCornerShape(10.dp),
+//                                    onClick = {
+//                                        isLoading = true
+//                                        viewModel.requestVC(
+//                                            VCRequest(
+//                                                39,
+//                                                savedDidDocument.value?.id
+//                                            )
+//                                        ) {
+//                                            isLoading = false
+//                                            if (it.isSuccessful) {
+//                                                if (it.body()?.code == 0) {
+//                                                    Toast.makeText(
+//                                                        context,
+//                                                        "VC 발급성공",
+//                                                        Toast.LENGTH_SHORT
+//                                                    )
+//                                                        .show()
+//                                                } else {
+//                                                    Toast.makeText(
+//                                                        context,
+//                                                        "실패 : ${it.body()?.msg}",
+//                                                        Toast.LENGTH_SHORT
+//                                                    ).show()
+//                                                }
+//                                            } else {
+//                                                Toast.makeText(
+//                                                    context,
+//                                                    "실패 : ${it.message()}",
+//                                                    Toast.LENGTH_SHORT
+//                                                )
+//                                                    .show()
+//                                            }
+//                                        }
+//                                    }) {
+//                                    Text(text = "인증서 재발급")
+//                                }
                                 Button(
                                     modifier = Modifier.fillMaxWidth(1f),
                                     colors = ButtonDefaults.buttonColors(
@@ -403,29 +379,43 @@ fun VCScreen(navController: NavController, viewModel: DIDViewModel) {
                                     shape = RoundedCornerShape(10.dp),
                                     onClick = {
                                         scope.launch {
-                                            viewModel.clearDidDocument()
-                                            viewModel.clearIsDidSaved()
+                                            viewModel.clearVc()
                                         }
+                                        cardFace = cardFace.next
                                     },
                                 ) {
-                                    Text(text = "DID 삭제")
+                                    Text(text = "VC 삭제")
                                 }
 
                             }
                         },
                     )
                 }
-                Button(onClick = {
-                    scope.launch {
-                        viewModel.clearVc()
-                    }
-                }) {
-                    Text(text = "VC삭제", style = MaterialTheme.typography.labelSmall)
-                }
             }
 
-            showIssuerList -> {
-                IssuerCardListView(issuerList = issuerList)
+            savedVC.value != null && showIssuerList -> {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                        IconButton(
+                            onClick = {
+                                showIssuerList = false
+                            },
+                        ) {
+                            Icon(
+                                modifier = Modifier
+                                    .size(30.dp),
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "close issuer list",
+                                tint = Color.Black
+                            )
+                        }
+                }
+                IssuerCardListView(issuerList = issuerList, didDocument = savedDidDocument.value!!, viewModel = viewModel)
+
             }
 
             else -> {
@@ -481,17 +471,18 @@ data class Issuer(
     val logoImageUrl: String,
     val institutionName: String,
     val type: String,
+    val available : Boolean
 )
 
 
 @Composable
-fun IssuerCardListView(issuerList: List<Issuer>) {
-    Column(modifier = Modifier.fillMaxHeight(1f)) {
+fun IssuerCardListView(issuerList: List<Issuer>, viewModel: DIDViewModel, didDocument: DidDocument) {
+    Column(modifier = Modifier.fillMaxHeight(0.9f)) {
         Text(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 30.dp, bottom = 10.dp),
-            text = "발급기관",
+                .padding(top = 0.dp, bottom = 0.dp),
+            text = "발급기관목록",
             style = TextStyle(
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
@@ -506,7 +497,7 @@ fun IssuerCardListView(issuerList: List<Issuer>) {
         ) {
             LazyColumn(modifier = Modifier.fillMaxHeight(1f)) {
                 items(issuerList) { issuer ->
-                    IssuerCard(issuer = issuer)
+                    IssuerCard(issuer = issuer, viewModel, didDocument)
                 }
             }
         }
@@ -515,7 +506,9 @@ fun IssuerCardListView(issuerList: List<Issuer>) {
 }
 
 @Composable
-fun IssuerCard(issuer: Issuer) {
+fun IssuerCard(issuer: Issuer, viewModel: DIDViewModel, savedDidDocument: DidDocument) {
+    val context = LocalContext.current
+    var isLoading by remember { mutableStateOf(false) }
     Card(
         modifier = Modifier
             .padding(horizontal = 10.dp, vertical = 5.dp)
@@ -531,14 +524,57 @@ fun IssuerCard(issuer: Issuer) {
             modifier = Modifier
                 .fillMaxWidth()
                 .fillMaxHeight()
-                .clickable(onClick = {})
+                .clickable(onClick = {
+                    if (issuer.available) {
+                        isLoading = true
+                        viewModel.requestVC(
+                            VCRequest(
+                                39,
+                                savedDidDocument.id,
+                            )
+                        ) {
+                            isLoading = false
+                            if (it.isSuccessful) {
+                                if (it.body()?.code == 0) {
+                                    Toast
+                                        .makeText(
+                                            context,
+                                            "VC 발급 성공",
+                                            Toast.LENGTH_SHORT
+                                        )
+                                        .show()
+                                } else {
+                                    Toast
+                                        .makeText(
+                                            context,
+                                            "실패 : ${it.body()?.msg}",
+                                            Toast.LENGTH_SHORT
+                                        )
+                                        .show()
+                                }
+                            } else {
+                                Toast
+                                    .makeText(
+                                        context,
+                                        "실패 : ${it.message()}",
+                                        Toast.LENGTH_SHORT
+                                    )
+                                    .show()
+                            }
+                        }
+                    } else {
+                        Toast
+                            .makeText(context, "사용불가능한 발급기관입니다.", Toast.LENGTH_SHORT)
+                            .show()
+                    }
+                })
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Box(
                 modifier = Modifier
-                    .fillMaxWidth(0.3f),
+                    .fillMaxWidth(0.25f),
                 contentAlignment = Alignment.Center,
             ) {
                 AsyncImage(
@@ -552,13 +588,13 @@ fun IssuerCard(issuer: Issuer) {
             }
             Column(
                 modifier = Modifier
-                    .padding(horizontal = 10.dp)
-                    .fillMaxWidth(0.9f)
+                    .padding(horizontal = 0.dp)
+                    .fillMaxWidth(0.55f)
             ) {
                 Text(
                     text = issuer.institutionName,
                     fontWeight = FontWeight.SemiBold,
-                    style = TextStyle(fontSize = 20.sp)
+                    style = TextStyle(fontSize = 18.sp)
                 )
                 Text(
                     text = issuer.type,
@@ -566,6 +602,15 @@ fun IssuerCard(issuer: Issuer) {
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
+            Text(
+                modifier = Modifier
+                    .fillMaxWidth(0.5f)
+                    .padding(horizontal = 0.dp),
+                text = if (issuer.available) "발급가능" else "예시",
+                color = if (issuer.available) Color.Green else Color.Gray,
+                style = TextStyle(fontSize = 12.sp),
+                textAlign = TextAlign.Center
+            )
         }
     }
 }
