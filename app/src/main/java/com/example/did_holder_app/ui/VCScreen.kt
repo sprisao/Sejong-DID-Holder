@@ -1,11 +1,16 @@
 package com.example.did_holder_app.ui
 
 import android.widget.Toast
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.OutlinedTextField
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -30,18 +35,25 @@ import com.example.did_holder_app.util.Constants
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import kotlinx.coroutines.launch
+import timber.log.Timber
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun VCScreen(navController: NavController, viewModel: DIDViewModel) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-
+    var cardFace by remember {
+        mutableStateOf(CardFace.Front)
+    }
     val savedVC = viewModel.vc.collectAsState(initial = VcResponseData())
     val savedDidDocument = viewModel.didDocument.collectAsState(initial = DidDocument())
 //    val savedUserSeq = viewModel.userSeq.collectAsState(initial = 0)
 
 
     var isLoading by remember { mutableStateOf(false) }
+    var showIssuerList by remember { mutableStateOf(false) }
 
     val moshi: Moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
     val jsonAdapter: JsonAdapter<VcResponseData> = moshi.adapter(VcResponseData::class.java)
@@ -60,17 +72,17 @@ fun VCScreen(navController: NavController, viewModel: DIDViewModel) {
         ),
         Issuer(
             logoImageUrl = "https://seeklogo.com/images/S/Samsung_Electronics-logo-4470505FDD-seeklogo.com.png",
-            institutionName = "Samsung Electronics",
+            institutionName = "삼성전자",
             type = "사원증"
         ),
         Issuer(
             logoImageUrl = "https://seeklogo.com/images/L/LG_Electronics-logo-DDDB1A917D-seeklogo.com.png",
-            institutionName = "LG Electronics",
+            institutionName = "LG전자",
             type = "사원증"
         ),
         Issuer(
             logoImageUrl = "https://seeklogo.com/images/S/SK_Telecom-logo-4DB6A97650-seeklogo.com.png",
-            institutionName = "SK Telecom",
+            institutionName = "SK텔레콤",
             type = "사원증"
         ),
     )
@@ -81,8 +93,41 @@ fun VCScreen(navController: NavController, viewModel: DIDViewModel) {
             .padding(0.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp),
+            horizontalArrangement = Arrangement.End
+        ) {
+            if (!showIssuerList ){
+                IconButton(
+                    onClick = {
+                        showIssuerList = true
+                    },
+                ) {
+                    Icon(
+                        modifier = Modifier
+                            .size(30.dp),
+                        imageVector = Icons.Default.Menu,
+                        contentDescription = "open issuer list",
+                        tint = Color.Black
+                    )
+                }
+            } else{
+                IconButton(
+                    onClick = {
+                        showIssuerList = false
+                    },
+                ) {
+                    Icon(
+                        modifier = Modifier
+                            .size(30.dp),
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "close issuer list",
+                        tint = Color.Black
+                    )
+                }
+            }
+        }
         when {
-//            (savedUserSeq.value != 0 && savedUserSeq.value != null) && savedVC.value == null -> {
             savedVC.value == null -> {
                 if (isLoading) {
                     CircularProgressIndicator()
@@ -106,6 +151,7 @@ fun VCScreen(navController: NavController, viewModel: DIDViewModel) {
                             ) {
                                 isLoading = false
                                 if (it.isSuccessful) {
+                                    Timber.d("VC 요청완료 : ${it.body()?.code}")
                                     if (it.body()?.code == 0) {
                                         Toast.makeText(context, "VC 요청완료", Toast.LENGTH_SHORT)
                                             .show()
@@ -132,25 +178,254 @@ fun VCScreen(navController: NavController, viewModel: DIDViewModel) {
                         Text(text = "VC요청", style = MaterialTheme.typography.labelSmall)
                     }
                 }
-//                Button(onClick = {
-//                    scope.launch {
-//                        viewModel.clearUserSeq()
-//                    }
-//                }) {
-//                    Text(text = "로그아웃", style = MaterialTheme.typography.labelSmall)
-//                }
             }
-            savedVC.value != null -> {
+            (savedVC.value != null && !showIssuerList) -> {
+//                IssuerCardListView(issuerList = issuerList)
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 26.dp, vertical = 0.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Top
+                ) {
+                    FlipCard(
+                        cardFace = cardFace,
+                        onClick = { cardFace = cardFace.next },
+                        modifier = Modifier
+                            .fillMaxWidth(1f)
+                            .aspectRatio(0.6f),
+                        front = {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize(),
+                                verticalArrangement = Arrangement.Top,
 
+                                ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth(1f)
+                                        .fillMaxHeight(0.7f)
+                                        .background(Color.White),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Column(
+                                        modifier = Modifier
+                                            .padding(bottom = 10.dp)
+                                            .fillMaxHeight(1f)
+                                            .fillMaxWidth(1f),
+                                        verticalArrangement = Arrangement.Center,
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        AsyncImage(
+                                            model = "https://www.medigatenews.com/file/news/268421",
+                                            modifier = Modifier
+                                                .fillMaxWidth(0.8f)
+                                                .fillMaxHeight(0.6f),
+                                            contentDescription = "세종텔레콤 사원증"
+                                        )
+                                    }
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .background(Color.Red)
+                                        .fillMaxWidth(1f)
+                                        .fillMaxHeight(1f),
+                                ) {
+                                    Column(
+                                        modifier = Modifier
+                                            .padding(horizontal = 14.dp, vertical = 12.dp)
+                                            .fillMaxWidth(1f)
+                                            .fillMaxHeight(1f),
+                                        verticalArrangement = Arrangement.SpaceBetween,
+                                    ) {
+                                        Column() {
+                                            Text(
+                                                text = "세종텔레콤",
+                                                style = TextStyle(
+                                                    color = Color.White,
+                                                    fontSize = 22.sp,
+                                                    fontWeight = FontWeight.Medium
+                                                )
+                                            )
+
+                                            Text(
+                                                text = "사원증",
+                                                style = TextStyle(
+                                                    color = Color.White,
+                                                    fontSize = 18.sp,
+                                                    fontWeight = FontWeight.Normal
+                                                )
+                                            )
+                                        }
+                                        if (savedVC.value!!.issuanceDate != "") {
+                                            val issuanceDate =
+                                                savedVC.value?.issuanceDate.toString()
+                                            val expirationDate =
+                                                savedVC.value?.validUntil.toString()
+                                            val inputFormat = DateTimeFormatter.ISO_DATE_TIME
+                                            val outputFormat =
+                                                DateTimeFormatter.ofPattern("yyyy년 MM월 dd일 HH시 mm분")
+                                            Text(
+                                                modifier = Modifier.padding(
+                                                    top = 5.dp,
+                                                    bottom = 5.dp
+                                                ),
+                                                text = "발급일: ${
+                                                    outputFormat.format(
+                                                        LocalDateTime.parse(
+                                                            issuanceDate,
+                                                            inputFormat
+                                                        )
+                                                    )
+                                                }",
+                                                style = TextStyle(
+                                                    color = Color.White,
+                                                    fontSize = 13.sp,
+                                                    fontWeight = FontWeight.Light
+                                                )
+                                            )
+                                        }
+
+                                    }
+                                }
+                            }
+                        },
+                        back = {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(14.dp),
+                                verticalArrangement = Arrangement.SpaceBetween,
+
+                                ) {
+                                Column {
+                                    Text(
+                                        "나의 DID 정보", style = TextStyle(
+                                            color = Color.Black,
+                                            fontSize = 24.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            letterSpacing = 0.sp
+                                        )
+                                    )
+                                    Spacer(
+                                        modifier = Modifier
+                                            .fillMaxWidth(1f)
+                                            .height(10.dp)
+                                    )
+                                    Text(
+                                        "DID",
+                                        style = TextStyle(
+                                            color = Color.Black,
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            letterSpacing = 0.sp
+                                        )
+                                    )
+                                    Text(
+                                        text = "dummy",
+                                        style = TextStyle(
+                                            color = Color.Black,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                        )
+                                    )
+                                    Text(
+                                        text = "Document",
+                                        style = TextStyle(
+                                            color = Color.Black,
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            letterSpacing = 0.sp
+                                        )
+                                    )
+                                    Text(
+                                        text = "dummy",
+                                        style = TextStyle(
+                                            color = Color.Black,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                        )
+                                    )
+                                }
+
+                                Button(
+                                    modifier = Modifier
+                                        .fillMaxWidth(1f)
+                                        .padding(vertical = 5.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color.White,
+                                        contentColor = Color.Black
+                                    ),
+                                    shape = RoundedCornerShape(10.dp),
+                                    onClick = {
+                                        isLoading = true
+                                        viewModel.requestVC(
+                                            VCRequest(
+                                                //todo login 화면 없으므로 userSeq 하드코딩
+                                                39,
+                                                savedDidDocument.value?.id
+                                            )
+                                        ) {
+                                            isLoading = false
+                                            if (it.isSuccessful) {
+                                                Timber.d("VC 요청완료 : ${it.body()?.code}")
+                                                if (it.body()?.code == 0) {
+                                                    Toast.makeText(
+                                                        context,
+                                                        "VC 요청완료",
+                                                        Toast.LENGTH_SHORT
+                                                    )
+                                                        .show()
+                                                } else {
+                                                    Toast.makeText(
+                                                        context,
+                                                        "실패 : ${it.body()?.msg}",
+                                                        Toast.LENGTH_SHORT
+                                                    ).show()
+                                                }
+                                            } else {
+                                                Toast.makeText(
+                                                    context,
+                                                    "실패 : ${it.message()}",
+                                                    Toast.LENGTH_SHORT
+                                                )
+                                                    .show()
+                                            }
+                                        }
+                                    }) {
+                                    Text(text = "VC 갱신요청")
+                                }
+                                Button(
+                                    modifier = Modifier.fillMaxWidth(1f),
+                                    colors = ButtonDefaults.buttonColors(
+                                        contentColor = Color.White
+                                    ),
+                                    shape = RoundedCornerShape(10.dp),
+                                    onClick = {
+                                        scope.launch {
+                                            viewModel.clearDidDocument()
+                                            viewModel.clearIsDidSaved()
+                                        }
+                                    },
+                                ) {
+                                    Text(text = "DID 삭제")
+                                }
+
+                            }
+                        },
+                    )
+                }
+                Button(onClick = {
+                    scope.launch {
+                        viewModel.clearVc()
+                    }
+                }) {
+                    Text(text = "VC삭제", style = MaterialTheme.typography.labelSmall)
+                }
+            }
+
+            showIssuerList -> {
                 IssuerCardListView(issuerList = issuerList)
-
-//                Button(onClick = {
-//                    scope.launch {
-//                        viewModel.clearVc()
-//                    }
-//                }) {
-//                    Text(text = "VC삭제", style = MaterialTheme.typography.labelSmall)
-//                }
             }
 
             else -> {
@@ -201,6 +476,7 @@ fun VCScreen(navController: NavController, viewModel: DIDViewModel) {
     }
 }
 
+
 data class Issuer(
     val logoImageUrl: String,
     val institutionName: String,
@@ -210,7 +486,7 @@ data class Issuer(
 
 @Composable
 fun IssuerCardListView(issuerList: List<Issuer>) {
-    Column( modifier = Modifier.fillMaxHeight(1f)) {
+    Column(modifier = Modifier.fillMaxHeight(1f)) {
         Text(
             modifier = Modifier
                 .fillMaxWidth()
@@ -254,9 +530,11 @@ fun IssuerCard(issuer: Issuer) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .fillMaxHeight()
+                .clickable(onClick = {})
                 .padding(16.dp),
-            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Box(
                 modifier = Modifier
@@ -265,7 +543,7 @@ fun IssuerCard(issuer: Issuer) {
             ) {
                 AsyncImage(
                     modifier =
-                            Modifier.fillMaxWidth(1f),
+                    Modifier.fillMaxWidth(1f),
                     model = issuer.logoImageUrl,
                     contentDescription = null,
                     contentScale = ContentScale.Fit,
@@ -274,13 +552,13 @@ fun IssuerCard(issuer: Issuer) {
             }
             Column(
                 modifier = Modifier
-                    .padding(horizontal = 10.dp,)
+                    .padding(horizontal = 10.dp)
                     .fillMaxWidth(0.9f)
             ) {
                 Text(
                     text = issuer.institutionName,
-                    fontWeight = FontWeight.Bold,
-                    style = TextStyle(fontSize = 16.sp)
+                    fontWeight = FontWeight.SemiBold,
+                    style = TextStyle(fontSize = 20.sp)
                 )
                 Text(
                     text = issuer.type,
