@@ -128,4 +128,6 @@ dependencies {
     //guava
     implementation 'com.google.guava:guava:31.0.1-android'
 
+    // Coil
+    implementation("io.coil-kt:coil-compose:2.2.2")
 }
