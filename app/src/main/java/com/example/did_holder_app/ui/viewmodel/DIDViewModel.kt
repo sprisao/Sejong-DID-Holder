@@ -1,15 +1,13 @@
 package com.example.did_holder_app.ui.viewmodel
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.did_holder_app.data.api.VpResponse
-import com.example.did_holder_app.data.repository.DIDRepositoryImpl
 import com.example.did_holder_app.data.datastore.DidDataStore
 import com.example.did_holder_app.data.model.Blockchain.BlockchainResponse
 import com.example.did_holder_app.data.model.DIDDocument.DidDocument
 import com.example.did_holder_app.data.model.VC.*
+import com.example.did_holder_app.data.repository.DIDRepositoryImpl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -28,7 +26,6 @@ class DIDViewModel(
     val isDidSaved: Flow<Boolean?> = dataStore.isDidSavedFlow
 
     // DID Document 생성
-    @RequiresApi(Build.VERSION_CODES.O)
     fun generateDidDocument(onComplete: () -> Unit) = viewModelScope.launch(Dispatchers.IO) {
             delay(3500)
         try {
@@ -101,15 +98,16 @@ class DIDViewModel(
 
 
 
-    @RequiresApi(Build.VERSION_CODES.O)
     fun generateVP(challenge: String) {
         viewModelScope.launch {
             didRepository.generateVP(challenge)
+            delay(1000)
         }
     }
 
     fun verifyVP(result: (Response<VpResponse>) -> Unit) {
         viewModelScope.launch {
+            delay(2000)
             didRepository.verifyVP(result)
         }
     }

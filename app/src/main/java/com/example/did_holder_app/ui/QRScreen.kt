@@ -1,25 +1,30 @@
 package com.example.did_holder_app.ui
 
 import android.content.Context
-import android.os.Build
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.annotation.RequiresApi
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
@@ -32,6 +37,8 @@ import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.common.util.concurrent.ListenableFuture
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -41,7 +48,6 @@ import java.util.concurrent.Executors
 fun QRScreen(viewModel: DIDViewModel, navController: NavController) {
     val cameraPermissionState =
         rememberPermissionState(android.Manifest.permission.CAMERA)
-
     if (!cameraPermissionState.status.isGranted) {
         CheckCameraPermission(cameraPermissionState)
     } else {
@@ -134,40 +140,183 @@ fun ScanQRCode(viewModel: ViewModel, navController: NavController) {
     )
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun QRResultScreen(
     viewModel: DIDViewModel,
     navController: NavController, qrResult: String,
-    context: Context
+    context: Context,
 ) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text("QR코드 스캔 결과:\n$qrResult", modifier = Modifier.align(Alignment.CenterHorizontally))
-        Button(onClick = {
-            viewModel.generateVP(qrResult)
-        }) {
-            Text(text = "VP 생성")
-        }
-        Button(onClick = {
-            viewModel.verifyVP {
-                if (it.isSuccessful) {
-                    Timber.d("VP 검증 성공")
-                    if (it.body()?.code == 0) {
-                        Toast.makeText(context, "VP 검증 성공", Toast.LENGTH_SHORT).show()
-                    } else {
-                        Toast.makeText(context, "VP 검증 실패", Toast.LENGTH_SHORT).show()
+    val vpData = listOf("DID", "직위", "이름", "사번")
+    val onItemChecked = { index: Int, isChecked: Boolean ->
+        Timber.d("index: $index, isChecked: $isChecked")
+    }
+    var showDialog by remember { mutableStateOf(false) }
+
+    var isLoading by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    if (isLoading) {
+        LoadingScreen(message = "VP를 생성하고 전송중입니다.")
+    }
+    else if (showDialog) {
+        ConfirmationDialog(
+            onConfirm = {
+                navController.popBackStack()
+            },
+            onDismiss = {
+                showDialog = false
+            }
+        )
+    }
+    else {
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Card(
+                modifier = Modifier.padding(16.dp),
+                elevation = CardDefaults.elevatedCardElevation(8.dp),
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.Top,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        "VP를 생성하여 전송하시겠습니까?",
+                        style = TextStyle(fontSize = 18.sp, letterSpacing = 0.sp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 3.dp),
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(15.dp))
+                    LazyColumn(
+                        modifier = Modifier.width(300.dp),
+                        horizontalAlignment = Alignment.Start,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        items(vpData.size) { index ->
+                            Row(
+                                horizontalArrangement = Arrangement.Start,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Checkbox(checked = true, onCheckedChange = {
+                                    onItemChecked(index, it)
+                                })
+                                Text(vpData[index], style = TextStyle(fontSize = 18.sp))
+                            }
+                        }
                     }
-                } else {
-                    Timber.d("VP 검증 실패")
-                    Toast.makeText(context, "VP 검증 실패", Toast.LENGTH_SHORT).show()
+                    Spacer(modifier = Modifier.height(15.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Button(
+                            onClick = {
+                                navController.popBackStack()
+                            },
+                            modifier = Modifier.width(120.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)
+                        ) {
+                            Text("취소")
+                        }
+                        Button(onClick = {
+                            isLoading = true
+                            viewModel.generateVP(qrResult)
+                            viewModel.verifyVP {
+                                if (it.isSuccessful) {
+                                    Timber.d("VP 검증 성공")
+                                    if (it.body()?.code == 0) {
+                                        isLoading = false
+                                        showDialog = true
+//                                        Toast.makeText(context, "VP 검증 성공", Toast.LENGTH_SHORT)
+//                                            .show()
+                                    } else {
+                                        Toast.makeText(context, "VP 검증 실패", Toast.LENGTH_SHORT)
+                                            .show()
+                                    }
+                                } else {
+                                    Timber.d("VP 검증 실패")
+                                    Toast.makeText(context, "VP 검증 실패", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }, modifier = Modifier.width(120.dp)) {
+                            Text("확인")
+                        }
+                    }
                 }
             }
-        }) {
-            Text("신원증명(VP제출)")
         }
+    }
+}
+
+@Composable
+fun ConfirmationDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    var visible by remember { mutableStateOf(true) }
+
+    if (visible) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth(0.8f)
+                    .fillMaxHeight(0.3f)
+                    .padding(bottom = 16.dp)
+                    .animateContentSize(
+                        animationSpec = tween(
+                            durationMillis = 300,
+                            easing = LinearOutSlowInEasing
+                        )
+                    ),
+            ) {
+                Column(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .fillMaxWidth(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Spacer(modifier = Modifier.height(15.dp))
+                    Text(
+                        "✅",
+                        style= TextStyle(fontSize = 20.sp),
+                        textAlign = TextAlign.Center
+                    )
+                    Text(
+                        "VP 검증 성공",
+                        style= TextStyle(fontSize = 22.sp),
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(15.dp))
+                    Button(
+                        modifier = Modifier
+                            .fillMaxWidth(0.8f)
+                            .height(50.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        onClick = {
+                            onConfirm()
+                            visible = false
+                        }
+                    ) {
+                        Text("확인")
+                    }
+                }
+            }
+        }
+    } else {
+        onDismiss()
     }
 }
