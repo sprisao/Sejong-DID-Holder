@@ -8,9 +8,7 @@ import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,14 +19,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.ViewModel
 import androidx.navigation.NavController
+import com.example.did_holder_app.R
 import com.example.did_holder_app.data.BarCodeAnalyser
 import com.example.did_holder_app.ui.viewmodel.DIDViewModel
 import com.example.did_holder_app.util.Constants.QR_RESULT_SCREEN_NAME
@@ -37,8 +36,6 @@ import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.common.util.concurrent.ListenableFuture
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -51,7 +48,7 @@ fun QRScreen(viewModel: DIDViewModel, navController: NavController) {
     if (!cameraPermissionState.status.isGranted) {
         CheckCameraPermission(cameraPermissionState)
     } else {
-        ScanQRCode(viewModel, navController)
+        ScanQRCode(navController)
     }
 
 }
@@ -73,7 +70,7 @@ fun CheckCameraPermission(cameraPermissionState: PermissionState) {
 }
 
 @Composable
-fun ScanQRCode(viewModel: ViewModel, navController: NavController) {
+fun ScanQRCode(navController: NavController) {
 
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -146,29 +143,28 @@ fun QRResultScreen(
     navController: NavController, qrResult: String,
     context: Context,
 ) {
-    val vpData = listOf("DID", "직위", "이름", "사번")
+    val vpData = listOf("나의 DID", "직위", "이름", "사번")
+
     val onItemChecked = { index: Int, isChecked: Boolean ->
         Timber.d("index: $index, isChecked: $isChecked")
     }
     var showDialog by remember { mutableStateOf(false) }
+    var isSuccess by remember { mutableStateOf(false) }
 
     var isLoading by remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
+
+
     if (isLoading) {
         LoadingScreen(message = "VP를 생성하고 전송중입니다.")
-    }
-    else if (showDialog) {
+
+    } else if (showDialog) {
         ConfirmationDialog(
             onConfirm = {
                 navController.popBackStack()
             },
-            onDismiss = {
-                showDialog = false
-            }
+            isSucess = isSuccess
         )
-    }
-    else {
-
+    } else {
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -176,6 +172,7 @@ fun QRResultScreen(
             contentAlignment = Alignment.Center
         ) {
             Card(
+                colors = CardDefaults.cardColors(containerColor = Color.White),
                 modifier = Modifier.padding(16.dp),
                 elevation = CardDefaults.elevatedCardElevation(8.dp),
             ) {
@@ -187,8 +184,9 @@ fun QRResultScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        "VP를 생성하여 전송하시겠습니까?",
+                        "'세종텔레콤 출입시스템'에서 \n 다음과 같은 정보를 요청합니다 :",
                         style = TextStyle(fontSize = 18.sp, letterSpacing = 0.sp),
+                        maxLines = 2,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 3.dp),
@@ -205,50 +203,76 @@ fun QRResultScreen(
                                 horizontalArrangement = Arrangement.Start,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Checkbox(checked = true, onCheckedChange = {
-                                    onItemChecked(index, it)
-                                })
+                                Box(
+                                    modifier = Modifier
+                                        .padding(vertical = 0.dp)
+                                        .width(40.dp)
+                                        .height(40.dp),
+                                ) {
+                                    Checkbox(
+                                        modifier = Modifier.fillMaxSize(),
+                                        checked = true,
+                                        onCheckedChange = {
+                                            onItemChecked(index, it)
+                                        })
+                                }
                                 Text(vpData[index], style = TextStyle(fontSize = 18.sp))
                             }
                         }
                     }
                     Spacer(modifier = Modifier.height(15.dp))
-
+                    Text(
+                        "위 정보를 제공하시겠습니까?",
+                        style = TextStyle(fontSize = 18.sp, letterSpacing = 0.sp),
+                        maxLines = 1,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 3.dp),
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(15.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Button(
+                            shape =
+                            RoundedCornerShape(20),
                             onClick = {
                                 navController.popBackStack()
                             },
-                            modifier = Modifier.width(120.dp),
+                            modifier = Modifier.width(125.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)
                         ) {
                             Text("취소")
                         }
-                        Button(onClick = {
-                            isLoading = true
-                            viewModel.generateVP(qrResult)
-                            viewModel.verifyVP {
-                                if (it.isSuccessful) {
-                                    Timber.d("VP 검증 성공")
-                                    if (it.body()?.code == 0) {
+                        Button(
+                            shape =
+                            RoundedCornerShape(20),
+                            colors = ButtonDefaults.buttonColors(Color.Red), onClick = {
+                                isLoading = true
+                                viewModel.generateVP(qrResult)
+                                viewModel.verifyVP {
+                                    if (it.isSuccessful) {
+                                        Timber.d("VP 검증 성공")
+                                        if (it.body()?.code == 0) {
+                                            isSuccess = true
+                                            isLoading = false
+                                            showDialog = true
+                                        } else {
+                                            isSuccess = false
+                                            isLoading = false
+                                            showDialog = true
+                                        }
+                                    } else {
+                                        isSuccess = false
                                         isLoading = false
                                         showDialog = true
-//                                        Toast.makeText(context, "VP 검증 성공", Toast.LENGTH_SHORT)
-//                                            .show()
-                                    } else {
-                                        Toast.makeText(context, "VP 검증 실패", Toast.LENGTH_SHORT)
-                                            .show()
                                     }
-                                } else {
-                                    Timber.d("VP 검증 실패")
-                                    Toast.makeText(context, "VP 검증 실패", Toast.LENGTH_SHORT).show()
                                 }
-                            }
-                        }, modifier = Modifier.width(120.dp)) {
+                            }, modifier = Modifier.width(125.dp)
+                        ) {
                             Text("확인")
                         }
                     }
@@ -260,55 +284,50 @@ fun QRResultScreen(
 
 @Composable
 fun ConfirmationDialog(
+    isSucess: Boolean,
     onConfirm: () -> Unit,
-    onDismiss: () -> Unit
 ) {
-    var visible by remember { mutableStateOf(true) }
-
-    if (visible) {
+    if (isSucess) {
         Box(
             modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Center,
         ) {
             Card(
                 modifier = Modifier
                     .fillMaxWidth(0.8f)
-                    .fillMaxHeight(0.3f)
-                    .padding(bottom = 16.dp)
-                    .animateContentSize(
-                        animationSpec = tween(
-                            durationMillis = 300,
-                            easing = LinearOutSlowInEasing
-                        )
-                    ),
+                    .fillMaxHeight(0.6f)
+                    .padding(bottom = 0.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
             ) {
                 Column(
                     modifier = Modifier
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .padding(horizontal = 16.dp, vertical = 60.dp)
                         .fillMaxWidth(1f),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceBetween
+                    verticalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Spacer(modifier = Modifier.height(15.dp))
-                    Text(
-                        "✅",
-                        style= TextStyle(fontSize = 20.sp),
-                        textAlign = TextAlign.Center
-                    )
-                    Text(
-                        "VP 검증 성공",
-                        style= TextStyle(fontSize = 22.sp),
-                        textAlign = TextAlign.Center
+                    Image(
+                        painter = painterResource(id = R.drawable.baseline_verified_user_24),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(50.dp)
+                            .align(Alignment.CenterHorizontally)
                     )
                     Spacer(modifier = Modifier.height(15.dp))
+                    Text(
+                        "검증이 완료되었습니다!",
+                        style = TextStyle(fontSize = 22.sp),
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(45.dp))
                     Button(
                         modifier = Modifier
-                            .fillMaxWidth(0.8f)
-                            .height(50.dp),
+                            .fillMaxWidth(0.6f)
+                            .height(40.dp),
                         shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
                         onClick = {
                             onConfirm()
-                            visible = false
                         }
                     ) {
                         Text("확인")
@@ -317,6 +336,56 @@ fun ConfirmationDialog(
             }
         }
     } else {
-        onDismiss()
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth(0.8f)
+                    .fillMaxHeight(0.6f)
+                    .padding(bottom = 0.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+            ) {
+                Column(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp, vertical = 60.dp)
+                        .fillMaxWidth(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.baseline_warning_24),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(50.dp)
+                            .align(Alignment.CenterHorizontally)
+                    )
+                    Spacer(modifier = Modifier.height(15.dp))
+                    Text(
+                        "검증에 실패하였습니다.",
+                        style = TextStyle(fontSize = 22.sp),
+                        textAlign = TextAlign.Center
+                    )
+                    Text(
+                        "인증서 확인 후 다시 시도해주세요.",
+                        style = TextStyle(fontSize = 18.sp),
+                        textAlign = TextAlign.Center)
+                    Spacer(modifier = Modifier.height(45.dp))
+                    Button(
+                        modifier = Modifier
+                            .fillMaxWidth(0.6f)
+                            .height(40.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+                        onClick = {
+                            onConfirm()
+                        }
+                    ) {
+                        Text("확인")
+                    }
+                }
+            }
+        }
     }
 }
