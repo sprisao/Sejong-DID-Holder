@@ -27,10 +27,14 @@ data class VpResponseData(
     var challengeResult: Boolean,
     @Json(name = "vpresult")
     var vpResult: Boolean,
-    @Json(name = "vcResult")
+    @Json(name = "vcresult")
     var vcResult: Boolean,
     @Json(name = "vcstatusresult")
     var vcStatusResult: Boolean,
+    @Json(name = "idresult")
+    var idResult: Boolean,
+    @Json(name = "authdateresult")
+    var authdateResult: Boolean,
     @Json(name = "verifyresult")
     var verifyResult: Boolean
 )
