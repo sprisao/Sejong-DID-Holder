@@ -149,20 +149,22 @@ fun QRResultScreen(
         Timber.d("index: $index, isChecked: $isChecked")
     }
     var showDialog by remember { mutableStateOf(false) }
+    var dialogMessage by remember { mutableStateOf("") }
     var isSuccess by remember { mutableStateOf(false) }
 
     var isLoading by remember { mutableStateOf(false) }
 
 
     if (isLoading) {
-        LoadingScreen(message = "VP를 생성하고 전송중입니다.")
+        LoadingScreen(message = "VP를 생성하여 전송 중 입니다.")
 
     } else if (showDialog) {
         ConfirmationDialog(
             onConfirm = {
                 navController.popBackStack()
             },
-            isSucess = isSuccess
+            isSucess = isSuccess,
+            message = dialogMessage,
         )
     } else {
         Box(
@@ -257,9 +259,41 @@ fun QRResultScreen(
                                     if (it.isSuccessful) {
                                         Timber.d("VP 검증 성공")
                                         if (it.body()?.code == 0) {
-                                            isSuccess = true
-                                            isLoading = false
-                                            showDialog = true
+                                            if (it.body()!!.data.verifyResult) {
+                                                isSuccess = true
+                                                isLoading = false
+                                                showDialog = true
+                                            } else if (!it.body()!!.data.idResult) {
+                                                isSuccess = false
+                                                dialogMessage = "DID가 일치하지 않습니다."
+                                                isLoading = false
+                                                showDialog = true
+                                            } else if (!it.body()!!.data.vcResult) {
+                                                isSuccess = false
+                                                dialogMessage = "인증서가 일치하지 않습니다."
+                                                isLoading = false
+                                                showDialog = true
+                                            } else if (!it.body()!!.data.vpResult) {
+                                                isSuccess = false
+                                                dialogMessage = "VP가 일치하지 않습니다."
+                                                isLoading = false
+                                                showDialog = true
+                                            } else if (!it.body()!!.data.authdateResult) {
+                                                isSuccess = false
+                                                dialogMessage = "최신 인증서가 아닙니다."
+                                                isLoading = false
+                                                showDialog = true
+                                            } else if (!it.body()!!.data.challengeResult) {
+                                                isSuccess = false
+                                                dialogMessage = "상호 검증에 문제가 있습니다."
+                                                isLoading = false
+                                                showDialog = true
+                                            } else if (!it.body()!!.data.vcStatusResult) {
+                                                isSuccess = false
+                                                dialogMessage = "인증서의 상태가 유효하지 않습니다."
+                                                isLoading = false
+                                                showDialog = true
+                                            }
                                         } else {
                                             isSuccess = false
                                             isLoading = false
@@ -286,6 +320,7 @@ fun QRResultScreen(
 fun ConfirmationDialog(
     isSucess: Boolean,
     onConfirm: () -> Unit,
+    message: String
 ) {
     if (isSucess) {
         Box(
@@ -315,7 +350,7 @@ fun ConfirmationDialog(
                     )
                     Spacer(modifier = Modifier.height(15.dp))
                     Text(
-                        "검증이 완료되었습니다!",
+                        "검증에 성공하였습니다.",
                         style = TextStyle(fontSize = 22.sp),
                         textAlign = TextAlign.Center
                     )
@@ -368,9 +403,10 @@ fun ConfirmationDialog(
                         textAlign = TextAlign.Center
                     )
                     Text(
-                        "인증서 확인 후 다시 시도해주세요.",
+                        message,
                         style = TextStyle(fontSize = 18.sp),
-                        textAlign = TextAlign.Center)
+                        textAlign = TextAlign.Center
+                    )
                     Spacer(modifier = Modifier.height(45.dp))
                     Button(
                         modifier = Modifier
