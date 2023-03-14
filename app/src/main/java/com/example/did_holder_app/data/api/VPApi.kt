@@ -27,6 +27,8 @@ data class VpResponseData(
     var challengeResult: Boolean,
     @Json(name = "vpresult")
     var vpResult: Boolean,
+    @Json(name = "vchashresult")
+    var vcHashResult : Boolean,
     @Json(name = "vcresult")
     var vcResult: Boolean,
     @Json(name = "vcstatusresult")
