@@ -90,6 +90,7 @@ dependencies {
     // OkHttp
     implementation 'com.squareup.okhttp3:okhttp:4.10.0'
     implementation 'com.squareup.okhttp3:logging-interceptor:4.10.0'
+    implementation 'com.localebro:okhttpprofiler:1.0.8'
 
     // Lifecycle
     implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.1'

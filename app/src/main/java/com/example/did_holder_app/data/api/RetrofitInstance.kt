@@ -1,5 +1,6 @@
 package com.example.did_holder_app.data.api
 
+import com.localebro.okhttpprofiler.OkHttpProfilerInterceptor
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import okhttp3.OkHttpClient
@@ -55,7 +56,7 @@ object RetrofitInstance {
     // BlockChain에 DidDocument 저장
     private val retrofit_blockchain = Retrofit.Builder().baseUrl(VC_HOLDER_URL)
         .addConverterFactory(MoshiConverterFactory.create(moshi)).client(
-            OkHttpClient.Builder().addInterceptor(httpLoggingInterceptor).sslSocketFactory(
+            OkHttpClient.Builder().addInterceptor(httpLoggingInterceptor).addInterceptor(OkHttpProfilerInterceptor()).sslSocketFactory(
                 sslContext.socketFactory,
                 trustAllCerts
             ).hostnameVerifier(trustAllHosts).build()
@@ -66,7 +67,7 @@ object RetrofitInstance {
     private val retrofit_vc = Retrofit.Builder()
         .baseUrl(VC_SERVER_URL)
         .addConverterFactory(MoshiConverterFactory.create(moshi)).client(
-            OkHttpClient.Builder().addInterceptor(httpLoggingInterceptor).sslSocketFactory(
+            OkHttpClient.Builder().addInterceptor(httpLoggingInterceptor).addInterceptor(OkHttpProfilerInterceptor()).sslSocketFactory(
                 sslContext.socketFactory,
                 trustAllCerts
             ).hostnameVerifier(trustAllHosts).build()
@@ -75,7 +76,7 @@ object RetrofitInstance {
     private val retrfit_vp = Retrofit.Builder()
         .baseUrl(RELAY_SERVER_URL)
         .addConverterFactory(MoshiConverterFactory.create(moshi)).client(
-            OkHttpClient.Builder().addInterceptor(httpLoggingInterceptor).sslSocketFactory(
+            OkHttpClient.Builder().addInterceptor(httpLoggingInterceptor).addInterceptor(OkHttpProfilerInterceptor()).sslSocketFactory(
                 sslContext.socketFactory,
                 trustAllCerts
             ).hostnameVerifier(trustAllHosts).build()
