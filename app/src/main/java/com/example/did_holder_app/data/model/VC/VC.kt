@@ -49,21 +49,21 @@ data class VcData(
 @JsonClass(generateAdapter = true)
 data class VerifiableCredential(
     @Json(name = "@context")
-    val context: List<String>,
+    val context: List<String>?,
     @Json(name = "id")
-    val id: String,
+    val id: String?,
     @Json(name = "type")
-    val type: List<String>,
+    val type: List<String>?,
     @Json(name = "credentialSubject")
-    val credentialSubjects: List<CredentialSubject>,
+    val credentialSubject: List<CredentialSubject>?,
     @Json(name = "issuer")
-    val issuer: String,
+    val issuer: String?,
     @Json(name = "issuanceDate")
-    val issuanceDate: String,
+    val issuanceDate: String?,
     @Json(name = "validFrom")
-    val validFrom: String,
+    val validFrom: String?,
     @Json(name = "validUntil")
-    val validUntil: String,
+    val validUntil: String?,
     @Json(name = "proof")
     val proof: Proof?
 )
@@ -71,15 +71,15 @@ data class VerifiableCredential(
 @JsonClass(generateAdapter = true)
 data class CredentialSubject(
     @Json(name = "type")
-    val type: String,
+    val type: String?,
     @Json(name = "id")
-    val id: String,
+    val id: String?,
     @Json(name = "position")
-    val position: String,
+    val position: String?,
     @Json(name = "name")
-    val name: String,
+    val name: String?,
     @Json(name = "status")
-    val status: String
+    val status: String?
 )
 
 @JsonClass(generateAdapter = true)
@@ -99,29 +99,37 @@ data class Proof(
 @JsonClass(generateAdapter = true)
 data class AdditionalInfo(
     @Json(name = "credentialText")
-    val credentialText: List<CredentialText>,
+    val credentialText: List<CredentialText>?,
     @Json(name = "credentialSalt")
-    val credentialSalt: List<CredentialSalt>
+    val credentialSalt: List<CredentialSalt>?
 )
 
 @JsonClass(generateAdapter = true)
 data class CredentialText(
     @Json(name = "name")
-    val name: String,
+    val name: String?,
+    @Json(name = "id")
+    val id: String?,
     @Json(name = "position")
-    val position: String,
+    val position: String?,
+    @Json(name = "type")
+    val type: String?,
     @Json(name = "status")
-    val status: String
+    val status: String?
 )
 
 @JsonClass(generateAdapter = true)
 data class CredentialSalt(
     @Json(name = "name")
-    val name: String,
+    val name: String?,
+    @Json(name = "id")
+    val id: String?,
     @Json(name = "position")
-    val position: String,
+    val position: String?,
+    @Json(name = "type")
+    val type: String?,
     @Json(name = "status")
-    val status: String
+    val status: String?
 )
 
 @JsonClass(generateAdapter = true)

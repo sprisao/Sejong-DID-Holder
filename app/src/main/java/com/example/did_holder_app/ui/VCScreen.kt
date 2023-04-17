@@ -255,8 +255,8 @@ fun VCScreen(navController: NavController, viewModel: DIDViewModel) {
                                         .padding(14.dp),
                                     verticalArrangement = Arrangement.SpaceBetween,
                                 ) {
-                                    if(savedVC.value!!.additionalInfo!!.credentialText.isNotEmpty()){
-                                        val credentialText: CredentialText = savedVC.value!!.additionalInfo!!.credentialText[0]
+                                    if(savedVC.value!!.additionalInfo!!.credentialText!!.isNotEmpty()){
+                                        val credentialText: CredentialText = savedVC.value!!.additionalInfo!!.credentialText!![0]
                                         Column {
                                             Text(
                                                 "사원정보", style = TextStyle(
@@ -279,14 +279,16 @@ fun VCScreen(navController: NavController, viewModel: DIDViewModel) {
                                                             letterSpacing = 0.sp
                                                         )
                                                     )
-                                                    Text(
-                                                        text = credentialText.name,
-                                                        style = TextStyle(
-                                                            color = Color.Black,
-                                                            fontSize = 11.sp,
-                                                            fontWeight = FontWeight.SemiBold,
+                                                    credentialText.name?.let {
+                                                        Text(
+                                                            text = it,
+                                                            style = TextStyle(
+                                                                color = Color.Black,
+                                                                fontSize = 11.sp,
+                                                                fontWeight = FontWeight.SemiBold,
+                                                            )
                                                         )
-                                                    )
+                                                    }
                                                     Spacer(modifier = Modifier.height(3.dp))
                                                     Text(
                                                         "직급",
@@ -297,14 +299,16 @@ fun VCScreen(navController: NavController, viewModel: DIDViewModel) {
                                                             letterSpacing = 0.sp
                                                         )
                                                     )
-                                                    Text(
-                                                        text = credentialText.position,
-                                                        style = TextStyle(
-                                                            color = Color.Black,
-                                                            fontSize = 11.sp,
-                                                            fontWeight = FontWeight.SemiBold,
+                                                    credentialText.position?.let {
+                                                        Text(
+                                                            text = it,
+                                                            style = TextStyle(
+                                                                color = Color.Black,
+                                                                fontSize = 11.sp,
+                                                                fontWeight = FontWeight.SemiBold,
+                                                            )
                                                         )
-                                                    )
+                                                    }
                                                     Spacer(modifier = Modifier.height(3.dp))
                                                     Text(
                                                         "부서",
@@ -315,14 +319,16 @@ fun VCScreen(navController: NavController, viewModel: DIDViewModel) {
                                                             letterSpacing = 0.sp
                                                         )
                                                     )
-                                                    Text(
-                                                        text = credentialText.status,
-                                                        style = TextStyle(
-                                                            color = Color.Black,
-                                                            fontSize = 11.sp,
-                                                            fontWeight = FontWeight.SemiBold,
+                                                    credentialText.type?.let {
+                                                        Text(
+                                                            text = it,
+                                                            style = TextStyle(
+                                                                color = Color.Black,
+                                                                fontSize = 11.sp,
+                                                                fontWeight = FontWeight.SemiBold,
+                                                            )
                                                         )
-                                                    )
+                                                    }
                                                     Spacer(modifier = Modifier.height(10.dp))
                                                     Text(
                                                         "인증서 전문",
