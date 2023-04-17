@@ -21,7 +21,7 @@ class DIDViewModel(
 ) :
     ViewModel() {
     val didDocument: Flow<DidDocument?> = dataStore.didDocumentFlow
-    val vc: Flow<VcResponseData?> = dataStore.vcFlow
+    val vc: Flow<VcData?> = dataStore.vcFlow
     val userSeq: Flow<Int?> = dataStore.userSeqFlow
     val isDidSaved: Flow<Boolean?> = dataStore.isDidSavedFlow
 

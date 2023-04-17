@@ -1,7 +1,7 @@
 package com.example.did_holder_app.data.model.VP
 
 
-import com.example.did_holder_app.data.model.VC.VcResponseData
+import com.example.did_holder_app.data.model.VC.VcData
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
@@ -14,7 +14,7 @@ data class VP(
     @Json(name = "type")
     val type: List<String>,
     @Json(name = "verifiableCredential")
-    val verifiableCredential: List<VcResponseData?>,
+    val verifiableCredential: List<VcData?>,
     @Json(name = "proof")
     val vpProof: VpProof
 )

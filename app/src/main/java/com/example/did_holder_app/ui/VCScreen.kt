@@ -27,10 +27,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.did_holder_app.data.model.DIDDocument.DidDocument
-import com.example.did_holder_app.data.model.VC.SignInRequest
-import com.example.did_holder_app.data.model.VC.VCRequest
-import com.example.did_holder_app.data.model.VC.VcCredentialSubject
-import com.example.did_holder_app.data.model.VC.VcResponseData
+import com.example.did_holder_app.data.model.VC.*
 import com.example.did_holder_app.ui.viewmodel.DIDViewModel
 import com.example.did_holder_app.util.Constants
 import com.squareup.moshi.JsonAdapter
@@ -47,7 +44,7 @@ fun VCScreen(navController: NavController, viewModel: DIDViewModel) {
     var cardFace by remember {
         mutableStateOf(CardFace.Front)
     }
-    val savedVC = viewModel.vc.collectAsState(initial = VcResponseData())
+    val savedVC = viewModel.vc.collectAsState(initial = VcData())
     val savedDidDocument = viewModel.didDocument.collectAsState(initial = DidDocument())
 //    val savedUserSeq = viewModel.userSeq.collectAsState(initial = 0)
 
@@ -57,7 +54,7 @@ fun VCScreen(navController: NavController, viewModel: DIDViewModel) {
     var showIssuerList by remember { mutableStateOf(false) }
 
     val moshi: Moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
-    val jsonAdapter: JsonAdapter<VcResponseData> = moshi.adapter(VcResponseData::class.java)
+    val jsonAdapter: JsonAdapter<VcData> = moshi.adapter(VcData::class.java)
 
     val vcResponseData = jsonAdapter.toJson(savedVC.value)
 
@@ -218,11 +215,11 @@ fun VCScreen(navController: NavController, viewModel: DIDViewModel) {
                                                     )
                                                 )
                                             }
-                                            if (savedVC.value!!.issuanceDate != "") {
+                                            if (savedVC.value!!.verifiableCredential!!.issuanceDate != "") {
                                                 val issuanceDate =
-                                                    savedVC.value?.issuanceDate.toString()
+                                                    savedVC.value!!.verifiableCredential!!.issuanceDate
                                                 val expirationDate =
-                                                    savedVC.value?.validUntil.toString()
+                                                    savedVC.value!!.verifiableCredential!!.issuanceDate
                                                 val inputFormat = DateTimeFormatter.ISO_DATE_TIME
                                                 val outputFormat =
                                                     DateTimeFormatter.ofPattern("yyyy년 MM월 dd일 HH시 mm분")
@@ -258,8 +255,8 @@ fun VCScreen(navController: NavController, viewModel: DIDViewModel) {
                                         .padding(14.dp),
                                     verticalArrangement = Arrangement.SpaceBetween,
                                 ) {
-                                    if(savedVC.value!!.vcCredentialSubject.isNotEmpty()){
-                                        val credentialSubject: VcCredentialSubject = savedVC.value!!.vcCredentialSubject[0]
+                                    if(savedVC.value!!.additionalInfo!!.credentialText.isNotEmpty()){
+                                        val credentialText: CredentialText = savedVC.value!!.additionalInfo!!.credentialText[0]
                                         Column {
                                             Text(
                                                 "사원정보", style = TextStyle(
@@ -283,7 +280,7 @@ fun VCScreen(navController: NavController, viewModel: DIDViewModel) {
                                                         )
                                                     )
                                                     Text(
-                                                        text = credentialSubject.name,
+                                                        text = credentialText.name,
                                                         style = TextStyle(
                                                             color = Color.Black,
                                                             fontSize = 11.sp,
@@ -301,7 +298,7 @@ fun VCScreen(navController: NavController, viewModel: DIDViewModel) {
                                                         )
                                                     )
                                                     Text(
-                                                        text = credentialSubject.position,
+                                                        text = credentialText.position,
                                                         style = TextStyle(
                                                             color = Color.Black,
                                                             fontSize = 11.sp,
@@ -319,7 +316,7 @@ fun VCScreen(navController: NavController, viewModel: DIDViewModel) {
                                                         )
                                                     )
                                                     Text(
-                                                        text = credentialSubject.type,
+                                                        text = credentialText.status,
                                                         style = TextStyle(
                                                             color = Color.Black,
                                                             fontSize = 11.sp,

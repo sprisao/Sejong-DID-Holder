@@ -56,11 +56,11 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
         .build()
 
     private val didDocJsonAdapter: JsonAdapter<DidDocument> = moshi.adapter(DidDocument::class.java)
-    private val vcResponseDataJsonAdapter: JsonAdapter<VcResponseData> =
-        moshi.adapter(VcResponseData::class.java)
+    private val vcResponseDataJsonAdapter: JsonAdapter<VcData> =
+        moshi.adapter(VcData::class.java)
     private val vpJsonAdapter: JsonAdapter<VP> = moshi.adapter(VP::class.java)
 
-    val vc: Flow<VcResponseData?> = dataStore.vcFlow
+    val vc: Flow<VcData?> = dataStore.vcFlow
 
     private fun hashKey(key: ByteArray): ByteArray {
         return MessageDigest.getInstance("SHA-256").digest(key)
@@ -181,7 +181,7 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
                     try {
                         response.body().let {
                             val vcResponseData =
-                                vcResponseDataJsonAdapter.toJson(it?.vcResponseData)
+                                vcResponseDataJsonAdapter.toJson(it?.vcData)
                             vcResponseData?.let { data ->
                                 dataStore.saveVc(data)
                             }
