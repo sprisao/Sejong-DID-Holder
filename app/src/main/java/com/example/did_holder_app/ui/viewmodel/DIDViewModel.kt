@@ -98,9 +98,9 @@ class DIDViewModel(
 
 
 
-    fun generateVP(challenge: String) {
+    fun generateVP(challenge: String, selectedCredential: List<String>) {
         viewModelScope.launch {
-            didRepository.generateVP(challenge)
+            didRepository.generateVP(challenge, selectedCredential)
             delay(1000)
         }
     }

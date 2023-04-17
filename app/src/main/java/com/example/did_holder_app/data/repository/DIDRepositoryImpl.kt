@@ -30,21 +30,13 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import okhttp3.ResponseBody
 import org.bitcoinj.core.Base58
-import org.bouncycastle.crypto.digests.SHA512Digest
 import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters
-import org.bouncycastle.crypto.params.Ed25519PublicKeyParameters
 import org.bouncycastle.crypto.signers.Ed25519Signer
-import org.bouncycastle.jcajce.interfaces.EdDSAPrivateKey
-import org.bouncycastle.jce.provider.BouncyCastleProvider
-import org.bouncycastle.math.ec.rfc8032.Ed25519
 import org.bouncycastle.util.encoders.Hex
 import retrofit2.Response
 import retrofit2.awaitResponse
 import timber.log.Timber
 import java.security.MessageDigest
-import java.security.Security
-import java.security.Signature
-import java.security.interfaces.EdECKey
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -226,15 +218,72 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
         }
     }
 
+    fun selectCredentialTextFields(
+        credentialText: List<CredentialText>,
+        selectedFields: List<String>
+    ): CredentialText {
+        return CredentialText(
+            name = if (selectedFields.contains("name")) credentialText[0].name else null,
+            position = if (selectedFields.contains("position")) credentialText[0].position else null,
+            id = if (selectedFields.contains("id")) credentialText[0].id else null,
+            status = if (selectedFields.contains("status")) credentialText[0].status else null,
+            type = if (selectedFields.contains("type")) credentialText[0].type else null,
+        )
+    }
+
+    fun selectCredentialSaltFields(
+        credentialSalt: List<CredentialSalt>,
+        selectedFields: List<String>
+    ): CredentialSalt {
+        return CredentialSalt(
+            name = if (selectedFields.contains("name")) credentialSalt[0].name else null,
+            position = if (selectedFields.contains("position")) credentialSalt[0].position else null,
+            id = if (selectedFields.contains("id")) credentialSalt[0].id else null,
+            status = if (selectedFields.contains("status")) credentialSalt[0].status else null,
+            type = if (selectedFields.contains("type")) credentialSalt[0].type else null,
+        )
+    }
+
 
     // todo 서명하기 위한 vp model 생성
-    @RequiresApi(Build.VERSION_CODES.O)
-    override suspend fun generateVP(challenge: String) {
-        val vc = dataStore.vcFlow.first()
+    override suspend fun generateVP(challenge: String, selectedCredential: List<String>) {
+
+        val vc = dataStore.vcFlow.first()?.verifiableCredential
+        val additionalInfo = dataStore.vcFlow.first()?.additionalInfo
+
         val didDocument = dataStore.didDocumentFlow.first()
         val did = didDocument!!.id
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
         val now = Instant.now().atZone(ZoneId.of("UTC")).format(formatter)
+
+        /* selectedCredential 에 속하는 각각의 필드들을 vc에서 추출하여 credentialText와 credentialSalt 필드에 추가해준다. */
+        // Create empty lists for credentialText and credentialSalt
+        val credentialText = mutableListOf<CredentialText>()
+        val credentialSalt = mutableListOf<CredentialSalt>()
+
+        var selectedCredentialText: CredentialText? = null
+        if (vc != null) {
+            selectedCredentialText = additionalInfo?.credentialText?.let {
+                selectCredentialTextFields(
+                    credentialText = it,
+                    selectedFields = selectedCredential
+                )
+            }
+        }
+
+        var selectedCredentialSalt: CredentialSalt? = null
+        if (vc != null) {
+            selectedCredentialSalt = additionalInfo?.credentialSalt?.let {
+                selectCredentialSaltFields(
+                    credentialSalt = it,
+                    selectedFields = selectedCredential
+                )
+            }
+        }
+
+        selectedCredentialSalt?.let { credentialSalt.add(it) }
+        selectedCredentialText?.let { credentialText.add(it) }
+
 
         // proofvalue가 없는 vp 생성
         var myVP = VP(
@@ -244,13 +293,17 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
             verifiableCredential = listOf(vc),
             vpProof = VpProof(
                 type = "Ed25519Signature2018",
-                creator = did.toString(),
+                creator = did,
                 created = now.toString(),
                 proofPurpose = "authentication",
                 challenge = challenge,
-                proofValue = null
-            )
+                proofValue = null,
+            ),
+            credentialText = credentialText,
+            credentialSalt = credentialSalt,
         )
+
+        Timber.d("myVP : ${vpJsonAdapter.toJson(myVP)}")
 
         // ProofValue를 제외한 VP를 Json으로 변환
         val vpWithoutProofValue = vpJsonAdapter.toJson(myVP)
@@ -317,7 +370,7 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            result (Response.error(500, ResponseBody.create(null, "error")))
+            result(Response.error(500, ResponseBody.create(null, "error")))
         }
     }
 

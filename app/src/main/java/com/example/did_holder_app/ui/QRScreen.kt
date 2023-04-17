@@ -140,10 +140,13 @@ fun ScanQRCode(navController: NavController) {
 @Composable
 fun QRResultScreen(
     viewModel: DIDViewModel,
-    navController: NavController, qrResult: String,
+    navController: NavController,
+    qrResult: String,
     context: Context,
 ) {
     val vpData = listOf("나의 DID", "직위", "이름", "사번")
+
+    val selectedCredential : List<String> = listOf("id", "name", "position", "type", "status")
 
     val onItemChecked = { index: Int, isChecked: Boolean ->
         Timber.d("index: $index, isChecked: $isChecked")
@@ -254,7 +257,7 @@ fun QRResultScreen(
                             RoundedCornerShape(20),
                             colors = ButtonDefaults.buttonColors(Color.Red), onClick = {
                                 isLoading = true
-                                viewModel.generateVP(qrResult)
+                                viewModel.generateVP(qrResult, selectedCredential)
                                 viewModel.verifyVP {
                                     if (it.isSuccessful) {
                                         Timber.d("VP 검증 성공")

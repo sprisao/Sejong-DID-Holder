@@ -28,6 +28,7 @@ interface DIDRepository {
 
     suspend fun generateVP(
         challenge: String,
+        selectedCredential: List<String>,
     )
 
     suspend fun verifyVP(
