@@ -113,7 +113,7 @@ context: Context
         composable("${Constants.QR_RESULT_SCREEN_NAME}/{qrResult}") {
             val qrResult = it.arguments?.getString("qrResult")
             if (qrResult != null) {
-                QRResultScreen(viewModel, navController, qrResult, context =context)
+                QRResultScreen(viewModel, navController, qrResult)
             }
         }
     }

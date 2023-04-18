@@ -1,8 +1,6 @@
 package com.example.did_holder_app.ui
 
-import android.content.Context
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
@@ -20,7 +18,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -142,31 +142,44 @@ fun QRResultScreen(
     viewModel: DIDViewModel,
     navController: NavController,
     qrResult: String,
-    context: Context,
 ) {
-    val vpData = listOf("나의 DID", "직위", "이름", "사번")
 
-    val selectedCredential : List<String> = listOf("id", "name", "position", "type", "status")
+    val selectableCredential = mapOf(
+        "id" to "나의 DID (필수)",
+        "name" to "이름 (선택)",
+        "position" to "직위 (선택)",
+        "type" to "사번 (선택)",
+        "status" to "상태 (선택)"
+    )
+
+    val selectedCredential: MutableList<String> = mutableListOf("id")
 
     val onItemChecked = { index: Int, isChecked: Boolean ->
-        Timber.d("index: $index, isChecked: $isChecked")
+        val credentialKey = selectableCredential.keys.toList()[index]
+        if (isChecked) {
+            selectedCredential.add(credentialKey)
+        } else {
+            selectedCredential.remove(credentialKey)
+        }
+        Timber.d("selectedCredential: $selectedCredential")
     }
+    var showSelectDialog by remember { mutableStateOf(false) }
     var showDialog by remember { mutableStateOf(false) }
     var dialogMessage by remember { mutableStateOf("") }
     var isSuccess by remember { mutableStateOf(false) }
-
     var isLoading by remember { mutableStateOf(false) }
-
+    var loadingMessage by remember { mutableStateOf("") }
 
     if (isLoading) {
-        LoadingScreen(message = "VP를 생성하여 전송 중 입니다.")
+
+        LoadingScreen(loadingMessage)
 
     } else if (showDialog) {
         ConfirmationDialog(
             onConfirm = {
                 navController.popBackStack()
             },
-            isSucess = isSuccess,
+            isSuccess = isSuccess,
             message = dialogMessage,
         )
     } else {
@@ -203,7 +216,21 @@ fun QRResultScreen(
                         horizontalAlignment = Alignment.Start,
                         verticalArrangement = Arrangement.Center
                     ) {
-                        items(vpData.size) { index ->
+                        items(selectableCredential.size) { index ->
+                            val credentialKey = selectableCredential.keys.toList()[index]
+                            val credentialValue = selectableCredential.values.toList()[index]
+
+                            val isChecked = remember {
+                                mutableStateOf(
+                                    if (credentialKey == "id") {
+                                        true
+                                    } else {
+                                        credentialKey in selectedCredential
+                                    }
+                                )
+                            }
+
+
                             Row(
                                 horizontalArrangement = Arrangement.Start,
                                 verticalAlignment = Alignment.CenterVertically
@@ -216,12 +243,15 @@ fun QRResultScreen(
                                 ) {
                                     Checkbox(
                                         modifier = Modifier.fillMaxSize(),
-                                        checked = true,
+                                        checked = isChecked.value,
                                         onCheckedChange = {
+                                            isChecked.value = it
                                             onItemChecked(index, it)
-                                        })
+                                        },
+                                    )
+
                                 }
-                                Text(vpData[index], style = TextStyle(fontSize = 18.sp))
+                                Text(credentialValue, style = TextStyle(fontSize = 18.sp))
                             }
                         }
                     }
@@ -256,44 +286,56 @@ fun QRResultScreen(
                             shape =
                             RoundedCornerShape(20),
                             colors = ButtonDefaults.buttonColors(Color.Red), onClick = {
-                                isLoading = true
-                                viewModel.generateVP(qrResult, selectedCredential)
-                                viewModel.verifyVP {
-                                    if (it.isSuccessful) {
-                                        Timber.d("VP 검증 성공")
-                                        if (it.body()?.code == 0) {
-                                            if (it.body()!!.data.verifyResult) {
-                                                isSuccess = true
-                                                isLoading = false
-                                                showDialog = true
-                                            } else if (!it.body()!!.data.idResult) {
+                                if (!selectedCredential.contains("id")) {
+                                    // "id"가 선택되지 않은 경우 알림창 띄우기
+                                    showSelectDialog = true
+                                    dialogMessage = "'DID'는 필수 항목입니다."
+                                    return@Button
+                                } else {
+                                    loadingMessage = "${selectedCredential.joinToString(", ") { selectableCredential[it] ?: "" }}을(를) \n제공하셨습니다.\n\nVP를 생성하여 전송 중 입니다."
+                                    isLoading = true
+                                    viewModel.generateVP(qrResult, selectedCredential)
+                                    viewModel.verifyVP {
+                                        if (it.isSuccessful) {
+                                            Timber.d("VP 검증 성공")
+                                            if (it.body()?.code == 0) {
+                                                if (it.body()!!.data.verifyResult) {
+                                                    isSuccess = true
+                                                    isLoading = false
+                                                    showDialog = true
+                                                } else if (!it.body()!!.data.idResult) {
+                                                    isSuccess = false
+                                                    dialogMessage = "DID가 일치하지 않습니다."
+                                                    isLoading = false
+                                                    showDialog = true
+                                                } else if (!it.body()!!.data.vcResult) {
+                                                    isSuccess = false
+                                                    dialogMessage = "인증서가 일치하지 않습니다."
+                                                    isLoading = false
+                                                    showDialog = true
+                                                } else if (!it.body()!!.data.vpResult) {
+                                                    isSuccess = false
+                                                    dialogMessage = "VP가 일치하지 않습니다."
+                                                    isLoading = false
+                                                    showDialog = true
+                                                } else if (!it.body()!!.data.authdateResult) {
+                                                    isSuccess = false
+                                                    dialogMessage = "최신 인증서가 아닙니다."
+                                                    isLoading = false
+                                                    showDialog = true
+                                                } else if (!it.body()!!.data.challengeResult) {
+                                                    isSuccess = false
+                                                    dialogMessage = "상호 검증에 문제가 있습니다."
+                                                    isLoading = false
+                                                    showDialog = true
+                                                } else if (!it.body()!!.data.vcStatusResult) {
+                                                    isSuccess = false
+                                                    dialogMessage = "인증서의 상태가 유효하지 않습니다."
+                                                    isLoading = false
+                                                    showDialog = true
+                                                }
+                                            } else {
                                                 isSuccess = false
-                                                dialogMessage = "DID가 일치하지 않습니다."
-                                                isLoading = false
-                                                showDialog = true
-                                            } else if (!it.body()!!.data.vcResult) {
-                                                isSuccess = false
-                                                dialogMessage = "인증서가 일치하지 않습니다."
-                                                isLoading = false
-                                                showDialog = true
-                                            } else if (!it.body()!!.data.vpResult) {
-                                                isSuccess = false
-                                                dialogMessage = "VP가 일치하지 않습니다."
-                                                isLoading = false
-                                                showDialog = true
-                                            } else if (!it.body()!!.data.authdateResult) {
-                                                isSuccess = false
-                                                dialogMessage = "최신 인증서가 아닙니다."
-                                                isLoading = false
-                                                showDialog = true
-                                            } else if (!it.body()!!.data.challengeResult) {
-                                                isSuccess = false
-                                                dialogMessage = "상호 검증에 문제가 있습니다."
-                                                isLoading = false
-                                                showDialog = true
-                                            } else if (!it.body()!!.data.vcStatusResult) {
-                                                isSuccess = false
-                                                dialogMessage = "인증서의 상태가 유효하지 않습니다."
                                                 isLoading = false
                                                 showDialog = true
                                             }
@@ -302,15 +344,18 @@ fun QRResultScreen(
                                             isLoading = false
                                             showDialog = true
                                         }
-                                    } else {
-                                        isSuccess = false
-                                        isLoading = false
-                                        showDialog = true
                                     }
                                 }
                             }, modifier = Modifier.width(125.dp)
                         ) {
                             Text("확인")
+                        }
+
+                        if (showSelectDialog) {
+                            ShowAlertDialog(
+                                message = dialogMessage,
+                                onClose = { showSelectDialog = false }
+                            )
                         }
                     }
                 }
@@ -320,12 +365,45 @@ fun QRResultScreen(
 }
 
 @Composable
+fun ShowAlertDialog(
+    message: String,
+    onClose: () -> Unit
+) {
+    AlertDialog(
+        containerColor = Color.White,
+        shape = RoundedCornerShape(10),
+        onDismissRequest = onClose,
+        title = {
+            Text(
+                text = "제공정보 알림",
+                fontWeight = FontWeight.Bold,
+                style = TextStyle(fontSize = 18.sp)
+            )
+        },
+        text = {
+            Text(
+                text = message,
+                style = TextStyle(fontSize = 16.sp)
+            )
+        },
+        confirmButton = {
+            Button(
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+                onClick = onClose,
+            ) {
+                Text("확인")
+            }
+        }
+    )
+}
+
+@Composable
 fun ConfirmationDialog(
-    isSucess: Boolean,
+    isSuccess: Boolean,
     onConfirm: () -> Unit,
     message: String
 ) {
-    if (isSucess) {
+    if (isSuccess) {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center,
