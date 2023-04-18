@@ -17,10 +17,14 @@ object Constants {
     // DID Document
     const val DID_DOCUMENT_CONTEXT = "https://www.w3.org/ns/did/v1"
     const val DID_DOCUMENT_METHODE = "SEJONG_MAINNET"
-    const val DID_DOCUMENT_PUBLIC_KEY_TYPE = "Ed25519Verificationkey2018"
+    const val DID_DOCUMENT_PUBLIC_KEY_TYPE = "RSAVerificationkey2018"
     const val DID_DOCUMENT_AUTHENTICATION_TYPE = "RsaSignatureAuthentication2023"
     const val DID_DOCUMENT_SERVICE_TYPE = "IndxService"
     const val DID_DOCUMENT_SERVICE_ENDPOINT = "https://example.com/indx"
 
+
+    // VP
+    const val VP_PROOF_TYPE = "RSASignature2018"
+    const val VP_PROOF_PURPOSE = "authentication"
 
 }

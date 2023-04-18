@@ -21,6 +21,8 @@ import com.example.did_holder_app.data.model.VP.VpProof
 import com.example.did_holder_app.util.Constants.DID_DOCUMENT_CONTEXT
 import com.example.did_holder_app.util.Constants.DID_DOCUMENT_METHODE
 import com.example.did_holder_app.util.Constants.DID_DOCUMENT_PUBLIC_KEY_TYPE
+import com.example.did_holder_app.util.Constants.VP_PROOF_PURPOSE
+import com.example.did_holder_app.util.Constants.VP_PROOF_TYPE
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
@@ -292,10 +294,10 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
             type = listOf("VerifiablePresentation", "SejongAccessPresentation"),
             verifiableCredential = listOf(vc),
             vpProof = VpProof(
-                type = "Ed25519Signature2018",
+                type = VP_PROOF_TYPE,
                 creator = did,
                 created = now.toString(),
-                proofPurpose = "authentication",
+                proofPurpose = VP_PROOF_PURPOSE,
                 challenge = challenge,
                 proofValue = null,
             ),
