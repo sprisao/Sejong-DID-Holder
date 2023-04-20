@@ -69,24 +69,6 @@ class DidDataStore(context: Context) {
         }
     }
 
-
-    val privateKeyFlow: Flow<String?> = context.dataStore.data.map {
-        it[Key.PRIVATE_KEY]
-    }
-
-    suspend fun savePrivateKey(privateKey: String) {
-        dataStore.edit {
-            it[Key.PRIVATE_KEY] = privateKey
-        }
-    }
-
-    suspend fun clearPrivateKey() {
-        dataStore.edit {
-            it.remove(Key.PRIVATE_KEY)
-        }
-    }
-
-
     // Did Document Flow
     val didDocumentFlow: Flow<DidDocument?> = dataStore.data.map {
         val didDocumentString = it[Key.DID_DOCUMENT]

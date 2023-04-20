@@ -371,50 +371,17 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
             Timber.d("privateKey is null")
         }
 
-//        val privateKey = dataStore.privateKeyFlow.first()
-//        Timber.d("privateKey : $privateKey")
-//
-//        // PrivateKey를 Base64로 디코딩
-//        val privateKeyByte = Base64.decode(privateKey, Base64.DEFAULT)
-//        Timber.d("privateKeyByte : ${Hex.toHexString(privateKeyByte)}")
-//
-//        // PrivateKey를 Ed25519PrivateKeyParameters로 변환
-//        val acturalPrivateKey = Ed25519PrivateKeyParameters(privateKeyByte, 0)
-//
-//        // PrivateKey로 데이터 서명
-//        val signer = Ed25519Signer()
-//        signer.init(true, acturalPrivateKey)
-//
-//        // Json데이터를 String으로 변환후 ByteArray로 변환 -> Hashing
-
         val hashedVpWithoutProofValue = hashKey(vpWithoutProofValue.toString().toByteArray())
-//
-//        signer.update(
-//            hashedVpWithoutProofValue,
-//            0,
-//            /* Size : String의 ByteArray값의 사이즈로 책정*/
-//            hashedVpWithoutProofValue.size
-//        )
-//
-//        // 서명
-//        val signature = signer.generateSignature()
 
-//        fun signMessage(message: String, privateKey: PrivateKey): ByteArray {
-            val signer = Signature.getInstance("SHA256withRSA")
-            signer.initSign(privateKey)
-            signer.update(hashedVpWithoutProofValue)
-//        signer.sign()
-//            return signer.sign()
-//        }
+        val signer = Signature.getInstance("SHA256withRSA")
+        signer.initSign(privateKey)
 
-//        val signature = signMessage(hashedVpWithoutProofValue.toString(), privateKey!!)
+        signer.update(hashedVpWithoutProofValue)
         val signature = signer.sign()
-
 
         // 서명을 Base64로 인코딩
         val signatureBase64 = Base64.encodeToString(signature, Base64.NO_WRAP or Base64.NO_PADDING)
 
-        // todo: 서명 된 vp 생성
         myVP.vpProof.proofValue = signatureBase64
 
         val myVPtoJSon2 = vpJsonAdapter.toJson(myVP)
