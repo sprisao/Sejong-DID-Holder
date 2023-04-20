@@ -18,7 +18,7 @@ data class VcResponse(
 data class VcData(
     @Json(name = "vc")
     val verifiableCredential: VerifiableCredential?,
-    @Json(name = "additionalinfo")
+    @Json(name = "additionalInfo")
     val additionalInfo: AdditionalInfo?
 ) {
     constructor() : this(
