@@ -1,20 +1,19 @@
 package com.example.did_holder_app.data.repository
 
-import android.os.Build
+import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyProperties
 import android.util.Base64
-import androidx.annotation.RequiresApi
 import com.example.did_holder_app.data.api.RetrofitInstance.blockchainApi
 import com.example.did_holder_app.data.api.RetrofitInstance.vcServerApi
 import com.example.did_holder_app.data.api.RetrofitInstance.vpServerApi
 import com.example.did_holder_app.data.api.VpRequest
 import com.example.did_holder_app.data.api.VpResponse
 import com.example.did_holder_app.data.datastore.DidDataStore
-import com.example.did_holder_app.data.keystore.AndroidKeyStoreUtil.generateAndStoreEd25519KeyPair
 import com.example.did_holder_app.data.model.Blockchain.BlockChainRequest
 import com.example.did_holder_app.data.model.Blockchain.BlockchainResponse
 import com.example.did_holder_app.data.model.DIDDocument.Authentication
+import com.example.did_holder_app.data.model.DIDDocument.DIDPublicKey
 import com.example.did_holder_app.data.model.DIDDocument.DidDocument
-import com.example.did_holder_app.data.model.DIDDocument.PublicKey
 import com.example.did_holder_app.data.model.VC.*
 import com.example.did_holder_app.data.model.VP.VP
 import com.example.did_holder_app.data.model.VP.VpProof
@@ -30,7 +29,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import okhttp3.ResponseBody
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.bitcoinj.core.Base58
 import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters
 import org.bouncycastle.crypto.signers.Ed25519Signer
@@ -38,7 +37,8 @@ import org.bouncycastle.util.encoders.Hex
 import retrofit2.Response
 import retrofit2.awaitResponse
 import timber.log.Timber
-import java.security.MessageDigest
+import java.security.*
+import java.security.spec.AlgorithmParameterSpec
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -61,19 +61,75 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
     }
 
     // DID Document 생성
-    @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun generateDidDocument() {
 
+        fun generateRSAKeyPair(alias: String): KeyPair {
+            try {
+                val keyPairGenerator = KeyPairGenerator.getInstance(
+                    KeyProperties.KEY_ALGORITHM_RSA, "AndroidKeyStore"
+                )
 
-        val keyPair = generateAndStoreEd25519KeyPair()
+                val spec: AlgorithmParameterSpec = KeyGenParameterSpec.Builder(
+                    alias,
+                    KeyProperties.PURPOSE_SIGN or KeyProperties.PURPOSE_VERIFY
+                )
+                    .setDigests(KeyProperties.DIGEST_SHA256)
+                    .setSignaturePaddings(KeyProperties.SIGNATURE_PADDING_RSA_PKCS1)
+                    .setKeySize(2048)
+                    .build()
+                keyPairGenerator.initialize(spec)
+                return keyPairGenerator.generateKeyPair()
+            } catch (e: NoSuchAlgorithmException) {
+                e.printStackTrace()
+            } catch (e: NoSuchProviderException) {
+                e.printStackTrace()
+            }
+            return KeyPair(null, null)
+        }
 
-        val privateKeyByte = keyPair.first.encoded
-        val privateKeyBase64 = Base64.encodeToString(privateKeyByte, Base64.DEFAULT)
+        val keyPair = generateRSAKeyPair("did_holder_app_key")
+        fun signMessage(message: String, privateKey: PrivateKey): ByteArray {
+            val signature = Signature.getInstance("SHA256withRSA")
+            signature.initSign(privateKey)
+            signature.update(message.toByteArray())
+            return signature.sign()
+        }
 
-        Timber.d(privateKeyBase64)
+        fun verifySignature(message: String, signature: ByteArray, publicKey: PublicKey): Boolean {
+            val signatureVerifier = Signature.getInstance("SHA256withRSA")
+            signatureVerifier.initVerify(publicKey)
+            signatureVerifier.update(message.toByteArray())
+            return signatureVerifier.verify(signature)
+        }
 
-        val publicKeyByte = keyPair.second.encoded
-        val hashedPubKey = hashKey(publicKeyByte)
+        val publicKey = keyPair.public
+        val privateKey = keyPair.private
+
+        /*생성된 키 테스트*/
+        if (publicKey != null && privateKey != null) {
+            // Key pair generated successfully
+            // Perform further checks if needed
+            val signature = signMessage("Hello, world!", privateKey)
+            val isVerified = verifySignature("Hello, world!", signature, publicKey)
+            if (isVerified) {
+                /*검증 성공*/
+                Timber.d("Signature verified successfully")
+            } else {
+                /*검증 실패*/
+                Timber.d("Signature verification failed")
+            }
+        } else {
+            /*키 없음*/
+            Timber.d("Public or private key is null - there was a problem with the key generation")
+            // Public or private key is null - there was a problem with the key generation
+        }
+
+
+
+        Timber.d(keyPair.toString())
+
+        val publicKeyByte = publicKey.encoded
+        val hashedPubKey = publicKeyByte?.let { hashKey(it) }
 
         val publicKeyBase58 = Base58.encode(publicKeyByte)
 
@@ -94,25 +150,15 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
             ),
             authentication = listOf(
                 Authentication(
-//                    type = DID_DOCUMENT_AUTHENTICATION_TYPE,
                     publicKey = didId
                 )
             ),
-//            service = listOf(
-//                Service(
-//                    id = "$didId;indx",
-//                    type = DID_DOCUMENT_SERVICE_TYPE,
-//                    serviceEndpoint = DID_DOCUMENT_SERVICE_ENDPOINT,
-//                )
-//            )
         )
 
         coroutineScope {
             launch {
                 val didDocumentJson = didDocJsonAdapter.toJson(didDocument)
                 dataStore.saveDidDocument(didDocumentJson)
-                dataStore.savePrivateKey(privateKeyBase64)
-//                dataStore.savePublicKey(publicKeyBase58)
             }
         }
     }
@@ -220,7 +266,7 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
         }
     }
 
-    fun selectCredentialTextFields(
+    private fun selectCredentialTextFields(
         credentialText: List<CredentialText>,
         selectedFields: List<String>
     ): CredentialText {
@@ -233,7 +279,7 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
         )
     }
 
-    fun selectCredentialSaltFields(
+    private fun selectCredentialSaltFields(
         credentialSalt: List<CredentialSalt>,
         selectedFields: List<String>
     ): CredentialSalt {
@@ -288,7 +334,7 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
 
 
         // proofvalue가 없는 vp 생성
-        var myVP = VP(
+        val myVP = VP(
             context = "https://www.w3.org/2018/credentials/v1",
             id = did,
             type = listOf("VerifiablePresentation", "SejongAccessPresentation"),
@@ -312,7 +358,7 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
 
         // PrivateKey를 가져옴
         val privateKey = dataStore.privateKeyFlow.first()
-        Timber.d("privateKey : ${privateKey}")
+        Timber.d("privateKey : $privateKey")
 
         // PrivateKey를 Base64로 디코딩
         val privateKeyByte = Base64.decode(privateKey, Base64.DEFAULT)
@@ -372,7 +418,7 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            result(Response.error(500, ResponseBody.create(null, "error")))
+            result(Response.error(500, "error".toResponseBody(null)))
         }
     }
 
