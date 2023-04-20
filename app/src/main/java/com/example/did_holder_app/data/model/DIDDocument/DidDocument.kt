@@ -11,7 +11,7 @@ data class DidDocument(
     @Json(name = "id")
     val id: String,
     @Json(name = "publicKey")
-    val publicKey: List<PublicKey>,
+    val DIDPublicKey: List<DIDPublicKey>,
     @Json(name = "authentication")
     val authentication: List<Authentication>,
 //    @Json(name = "service")

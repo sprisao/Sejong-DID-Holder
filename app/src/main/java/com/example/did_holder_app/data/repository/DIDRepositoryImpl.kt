@@ -84,8 +84,8 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
         val didDocument = DidDocument(
             context = DID_DOCUMENT_CONTEXT,
             id = didId,
-            publicKey = listOf(
-                PublicKey(
+            DIDPublicKey = listOf(
+                DIDPublicKey(
                     id = didId,
                     type = DID_DOCUMENT_PUBLIC_KEY_TYPE,
                     controller = didId,
