@@ -25,15 +25,14 @@ import com.example.did_holder_app.util.Constants.VP_PROOF_TYPE
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.bitcoinj.core.Base58
-import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters
-import org.bouncycastle.crypto.signers.Ed25519Signer
-import org.bouncycastle.util.encoders.Hex
 import retrofit2.Response
 import retrofit2.awaitResponse
 import timber.log.Timber
@@ -357,32 +356,60 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
         val vpWithoutProofValue = vpJsonAdapter.toJson(myVP)
 
         // PrivateKey를 가져옴
-        val privateKey = dataStore.privateKeyFlow.first()
-        Timber.d("privateKey : $privateKey")
 
-        // PrivateKey를 Base64로 디코딩
-        val privateKeyByte = Base64.decode(privateKey, Base64.DEFAULT)
-        Timber.d("privateKeyByte : ${Hex.toHexString(privateKeyByte)}")
+        val keyAlias = "did_holder_app_key"
 
-        // PrivateKey를 Ed25519PrivateKeyParameters로 변환
-        val acturalPrivateKey = Ed25519PrivateKeyParameters(privateKeyByte, 0)
+        val keyStore = KeyStore.getInstance("AndroidKeyStore")
+        withContext(Dispatchers.IO) {
+            keyStore.load(null)
+        }
 
-        // PrivateKey로 데이터 서명
-        val signer = Ed25519Signer()
-        signer.init(true, acturalPrivateKey)
+        val privateKey = keyStore.getKey(keyAlias, null) as PrivateKey?
+        if (privateKey != null) {
+            Timber.d("privateKey : $privateKey");
+        } else {
+            Timber.d("privateKey is null")
+        }
 
-        // Json데이터를 String으로 변환후 ByteArray로 변환 -> Hashing
+//        val privateKey = dataStore.privateKeyFlow.first()
+//        Timber.d("privateKey : $privateKey")
+//
+//        // PrivateKey를 Base64로 디코딩
+//        val privateKeyByte = Base64.decode(privateKey, Base64.DEFAULT)
+//        Timber.d("privateKeyByte : ${Hex.toHexString(privateKeyByte)}")
+//
+//        // PrivateKey를 Ed25519PrivateKeyParameters로 변환
+//        val acturalPrivateKey = Ed25519PrivateKeyParameters(privateKeyByte, 0)
+//
+//        // PrivateKey로 데이터 서명
+//        val signer = Ed25519Signer()
+//        signer.init(true, acturalPrivateKey)
+//
+//        // Json데이터를 String으로 변환후 ByteArray로 변환 -> Hashing
+
         val hashedVpWithoutProofValue = hashKey(vpWithoutProofValue.toString().toByteArray())
+//
+//        signer.update(
+//            hashedVpWithoutProofValue,
+//            0,
+//            /* Size : String의 ByteArray값의 사이즈로 책정*/
+//            hashedVpWithoutProofValue.size
+//        )
+//
+//        // 서명
+//        val signature = signer.generateSignature()
 
-        signer.update(
-            hashedVpWithoutProofValue,
-            0,
-            /* Size : String의 ByteArray값의 사이즈로 책정*/
-            hashedVpWithoutProofValue.size
-        )
+//        fun signMessage(message: String, privateKey: PrivateKey): ByteArray {
+            val signer = Signature.getInstance("SHA256withRSA")
+            signer.initSign(privateKey)
+            signer.update(hashedVpWithoutProofValue)
+//        signer.sign()
+//            return signer.sign()
+//        }
 
-        // 서명
-        val signature = signer.generateSignature()
+//        val signature = signMessage(hashedVpWithoutProofValue.toString(), privateKey!!)
+        val signature = signer.sign()
+
 
         // 서명을 Base64로 인코딩
         val signatureBase64 = Base64.encodeToString(signature, Base64.NO_WRAP or Base64.NO_PADDING)
