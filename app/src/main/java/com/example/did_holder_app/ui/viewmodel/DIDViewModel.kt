@@ -1,5 +1,6 @@
 package com.example.did_holder_app.ui.viewmodel
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.did_holder_app.data.api.VpResponse
@@ -26,14 +27,13 @@ class DIDViewModel(
     val isDidSaved: Flow<Boolean?> = dataStore.isDidSavedFlow
 
     // DID Document 생성
-    fun generateDidDocument(onComplete: () -> Unit) = viewModelScope.launch(Dispatchers.IO) {
+    fun generateDidDocument(context: Context) = viewModelScope.launch(Dispatchers.IO) {
             delay(3500)
         try {
-            didRepository.generateDidDocument()
+            didRepository.generateDidDocument(context)
         } catch (e: Exception) {
             Timber.e(e)
         }
-        onComplete()
     }
 
     // Blockchain에 DID Document를 저장

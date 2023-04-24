@@ -1,5 +1,6 @@
 package com.example.did_holder_app.data.repository
 
+import android.content.Context
 import com.example.did_holder_app.data.api.VpResponse
 import com.example.did_holder_app.data.model.Blockchain.BlockchainResponse
 import com.example.did_holder_app.data.model.DIDDocument.DidDocument
@@ -8,7 +9,7 @@ import org.bouncycastle.asn1.cmp.Challenge
 import retrofit2.Response
 
 interface DIDRepository {
-    suspend fun generateDidDocument()
+    suspend fun generateDidDocument(context: Context)
     suspend fun saveToBlockChain(
         didDocument: DidDocument,
         result: (Response<BlockchainResponse>) -> Unit,

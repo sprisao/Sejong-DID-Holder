@@ -1,5 +1,7 @@
 package com.example.did_holder_app.data.repository
 
+import android.app.KeyguardManager
+import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
@@ -60,13 +62,18 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
     }
 
     // DID Document 생성
-    override suspend fun generateDidDocument() {
+    override suspend fun generateDidDocument(context: Context) {
 
-        fun generateRSAKeyPair(alias: String): KeyPair {
+        fun generateRSAKeyPair(alias: String, context: Context): KeyPair? {
             try {
                 val keyPairGenerator = KeyPairGenerator.getInstance(
                     KeyProperties.KEY_ALGORITHM_RSA, "AndroidKeyStore"
                 )
+
+                val keyguardManager = context.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+                if (!keyguardManager.isKeyguardSecure) {
+                    throw IllegalStateException("Screen lock is not enabled")
+                }
 
                 val spec: AlgorithmParameterSpec = KeyGenParameterSpec.Builder(
                     alias,
@@ -74,19 +81,26 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
                 )
                     .setDigests(KeyProperties.DIGEST_SHA256)
                     .setSignaturePaddings(KeyProperties.SIGNATURE_PADDING_RSA_PKCS1)
+                    .setUserAuthenticationRequired(true) // Set user authentication to true
                     .setKeySize(2048)
                     .build()
+
                 keyPairGenerator.initialize(spec)
                 return keyPairGenerator.generateKeyPair()
             } catch (e: NoSuchAlgorithmException) {
                 e.printStackTrace()
             } catch (e: NoSuchProviderException) {
                 e.printStackTrace()
+            } catch (e: InvalidAlgorithmParameterException) {
+                e.printStackTrace()
+            } catch (e: IllegalStateException) {
+                e.printStackTrace()
             }
-            return KeyPair(null, null)
+            return null
         }
 
-        val keyPair = generateRSAKeyPair("did_holder_app_key")
+
+        val keyPair = generateRSAKeyPair("did_holder_app_key", context)
         fun signMessage(message: String, privateKey: PrivateKey): ByteArray {
             val signature = Signature.getInstance("SHA256withRSA")
             signature.initSign(privateKey)
@@ -101,8 +115,8 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
             return signatureVerifier.verify(signature)
         }
 
-        val publicKey = keyPair.public
-        val privateKey = keyPair.private
+        val publicKey = keyPair?.public
+        val privateKey = keyPair?.private
 
         /*생성된 키 테스트*/
         if (publicKey != null && privateKey != null) {
@@ -127,7 +141,7 @@ class DIDRepositoryImpl(private val dataStore: DidDataStore) : DIDRepository {
 
         Timber.d(keyPair.toString())
 
-        val publicKeyByte = publicKey.encoded
+        val publicKeyByte = publicKey?.encoded
         val hashedPubKey = publicKeyByte?.let { hashKey(it) }
 
         val publicKeyBase58 = Base58.encode(publicKeyByte)
